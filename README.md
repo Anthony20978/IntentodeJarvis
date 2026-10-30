@@ -6,36 +6,6 @@ v0.1.0
 ## Estado
 En este momento, Jarvis esta en fase 0, no existe codigo y es una fase de organización e inicialización.
 ## Organización de archivos
-<style>
-.tree ul {
-  list-style: none;
-  padding-left: 10px;
-}
-.tree li {
-  position: relative;
-  padding: 5px 0 5px 20px;
-  border-left: 1px solid #888;
-}
-.tree li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 16px;
-  width: 15px;
-  border-top: 1px solid #888;
-}
-.tree li:last-child {
-  border-left: none;
-}
-.tree li:last-child::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  height: 16px;
-  border-left: 1px solid #888;
-}
-</style>
 <div class="tree">
   <ul>JARVIS/<ul>
         <li>src/<ul>
