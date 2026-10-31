@@ -1,13 +1,13 @@
 [build-system]
 requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
-
 [project]
 name = "jarvis"
-version = "0.1.0"
+version = "0.1.1"
 description = "Asistente personal local y multiplataforma"
 requires-python = ">=3.10"
 dependencies = []
-
+[project.scripts]
+jarvis = "jarvis.main:start_jarvis"
 [tool.setuptools.packages.find]
 where = ["src"]

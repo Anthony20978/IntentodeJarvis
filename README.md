@@ -2,9 +2,17 @@
 ## Proposito:
 En este proyecto intentaremos hacer un jarvis funcional.
 ## Versión
-v0.1.0
+v0.1.1
 ## Estado
-En este momento, Jarvis esta en fase 0, no existe codigo y es una fase de organización e inicialización.
+En este momento, Jarvis esta en fase 1. Jarvis solo poseé un nucleo que administra tres comandos simples, y memoria persistente con SQLite 3, en una tabla.
+## Tabla de memoria de Jarvis
+|Campo|Tipo|Uso|
+|:---:|:---:|:---:|
+|ID|Int Autoincrement|Regula el orden de la tabla|
+|Key|Text Unique|Es una llave que guarda un dato|
+|Value|Text|El dato, en forma de texto a guardar. se busca con la llave|
+
+> La tabla es una forma provicional de guardado de datos. Con el desarrollo del proyecto se puede expandir y mejorar en un futuro.
 ## Organización de archivos
 <div class="tree">
   <ul>JARVIS/<ul>
@@ -57,6 +65,5 @@ contiene la principal informacion para el usuario.
 se asegura de que GitHub no guarde archivos innecesarios.
 - archivo **pyprojecy.py**:
 contiene información acerca de la configuración del proyecto.
-<div style="border-left: 4px solid #c42220; background: #2b1717; padding: 12px; border-radius: 6px;">
-El proyecto continua en una fase temprana de desarrollo. Su estructura y funcionalidades cambiarán conforme a su construcción.
-</div>
+
+>El proyecto continua en una fase temprana de desarrollo. Su estructura y funcionalidades cambiarán conforme a su construcción.

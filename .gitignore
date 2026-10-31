@@ -1,24 +1,24 @@
-
 # Python
 __pycache__/
 *.py[cod]
 *.egg-info/
 dist/
 build/
-
 # Entornos virtuales
 .venv/
 venv/
 env/
-
+# Datos y bases de datos locales
+data/
+*.db
+*.sqlite
+*.sqlite3
 # Configuración local y secretos
 .env
 .env.*
-
 # Editores
 .vscode/
 .idea/
-
 # Sistema operativo
 .DS_Store
 Thumbs.db
