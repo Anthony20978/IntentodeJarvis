@@ -1,9 +1,20 @@
 import sqlite3
 from contextlib import closing
 from .config import DATA_DIR, DATABASE_PATH
+from pathlib import Path
+import shutil
+# Ubicación anterior de la base de datos
+LEGACY_DATABASE_PATH = (
+    Path(__file__).resolve().parents[2]
+    / "data"
+    / "jarvis.db"
+)
 def initialize_memory():
-    """Crea la base de datos y su tabla si no existen."""
+    """Inicializa la base de datos y migra datos antiguos si existen."""
     DATA_DIR.mkdir(parents=True, exist_ok=True)
+    # Migrar la base de datos anterior si todavía no existe la nueva.
+    if not DATABASE_PATH.exists() and LEGACY_DATABASE_PATH.is_file():
+        shutil.copy2(LEGACY_DATABASE_PATH, DATABASE_PATH)
     with closing(sqlite3.connect(DATABASE_PATH)) as connection:
         with connection:
             connection.execute("""
