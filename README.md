@@ -97,6 +97,67 @@ contiene información acerca de la configuración del proyecto.
   - Sistema de razonamiento y comprensión de instrucciones.
   - Funcionamiento básico sin conexión.
 
+  Por Simplicidad, esta fase estará dividida en varias más, dependiendo de la potencia esperada en la IA.
+
+- **3.1. Arquitectura de inteligencia**
+  - Diseñar la estructura interna del cerebro de JARVIS.
+  - Definir los componentes y su comunicación.
+  - Establecer una arquitectura modular, independiente y ampliable.
+
+- **3.2. Procesamiento del lenguaje**
+  - Implementar un sistema propio de procesamiento del lenguaje.
+  - Desarrollar tokenización y normalización de texto.
+  - Identificar palabras, estructuras y elementos relevantes de las instrucciones.
+
+- **3.3. Comprensión de intenciones**
+  - Reconocer las intenciones del usuario.
+  - Identificar entidades, parámetros y contexto.
+  - Relacionar instrucciones con las capacidades de JARVIS.
+
+- **3.4. Motor neuronal propio**
+  - Desarrollar las bases de una red neuronal desde cero.
+  - Implementar operaciones, capas y funciones de activación.
+  - Crear un sistema propio de inferencia.
+
+- **3.5. Entrenamiento y aprendizaje**
+  - Implementar algoritmos propios de entrenamiento.
+  - Crear y entrenar modelos pequeños especializados.
+  - Evaluar resultados y mejorar los modelos mediante entrenamiento controlado.
+
+- **3.6. Memoria contextual**
+  - Incorporar contexto a las conversaciones.
+  - Relacionar información actual con recuerdos anteriores.
+  - Mejorar la recuperación y utilización de información almacenada.
+
+- **3.7. Razonamiento y planificación**
+  - Desarrollar mecanismos para analizar instrucciones.
+  - Dividir tareas complejas en pasos.
+  - Evaluar alternativas y seleccionar acciones.
+  - Gestionar errores y resultados inesperados.
+
+- **3.8. Integración con las capacidades de JARVIS**
+  - Conectar la inteligencia con los módulos internos.
+  - Traducir decisiones en acciones.
+  - Validar resultados y gestionar respuestas.
+
+- **3.9. Integración opcional de modelos externos**
+  - Permitir conexiones con modelos de inteligencia artificial externos.
+  - Crear una interfaz independiente del proveedor o modelo.
+  - Mantener el funcionamiento completo de JARVIS sin conexiones externas.
+  - Permitir activar o desactivar estas integraciones.
+
+- **3.10. Optimización y evaluación**
+  - Optimizar el rendimiento y consumo de recursos.
+  - Evaluar precisión, velocidad y calidad de respuestas.
+  - Mejorar la compatibilidad con diferentes dispositivos.
+  - Realizar pruebas de funcionamiento offline.
+
+- **3.11. Consolidación del cerebro**
+  - Integrar todos los componentes de inteligencia.
+  - Verificar su funcionamiento conjunto.
+  - Documentar la arquitectura y los mecanismos de aprendizaje.
+  - Preparar el sistema para las siguientes fases del proyecto.
+
 - **Fase 4 — Sistema de voz**
   - Reconocimiento de voz.
   - Síntesis de voz.
@@ -149,3 +210,5 @@ contiene información acerca de la configuración del proyecto.
 - **Portable:** evitar depender de una computadora o sistema operativo específico.
 - **Privacidad:** los datos personales permanecen bajo control del usuario.
 - **Modular:** cada capacidad debe poder mantenerse, sustituirse o desactivarse independientemente.
+
+> Este proyecto se inició con fines mayormente de aprendizaje.
