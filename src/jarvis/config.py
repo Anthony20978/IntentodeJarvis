@@ -22,6 +22,6 @@ DATA_DIR = Path(
 # Base de datos
 DATABASE_PATH = DATA_DIR / "jarvis.db"
 # Versión
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 # Idioma configurable
 DEFAULT_LANGUAGE = os.getenv("JARVIS_LANGUAGE", "es").strip() or "es"

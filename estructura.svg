@@ -1,0 +1,169 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="2600" viewBox="0 0 1200 2600">
+<defs>
+  <style>
+    .title{font:bold 34px sans-serif;fill:#e8eef5}
+    .subtitle{font:15px sans-serif;fill:#91a4b7}
+    .section{font:bold 21px sans-serif;fill:#8bc6a5}
+    .folder{font:bold 19px sans-serif;fill:white}
+    .filename{font:bold 15px monospace;fill:#d9e8f2}
+    .description{font:14px sans-serif;fill:#b5c4d1}
+    .line{stroke:#547b70;stroke-width:3;fill:none;stroke-linecap:round}
+    .panel{fill:#192b38;stroke:#344b5b;stroke-width:1.5}
+    .folderbox{fill:#285a49;stroke:#47856a}
+    .rootbox{fill:#24445c;stroke:#547b98}
+  </style>
+</defs>
+
+<rect width="1200" height="2600" fill="#101b25"/>
+
+<!-- ENCABEZADO -->
+<text x="600" y="65" text-anchor="middle" class="title">JARVIS</text>
+<text x="600" y="98" text-anchor="middle" class="subtitle">
+ESTRUCTURA Y DOCUMENTACIÓN DEL PROYECTO
+</text>
+
+<!-- ÁRBOL -->
+<rect x="490" y="135" width="220" height="55" rx="10" class="rootbox"/>
+<text x="600" y="170" text-anchor="middle" class="folder">JARVIS/</text>
+
+<path d="M600 190 V230 H220 V265 M600 230 V265 M600 230 H980 V265" class="line"/>
+
+<rect x="130" y="265" width="180" height="48" rx="8" class="folderbox"/>
+<text x="220" y="296" text-anchor="middle" class="folder">src/</text>
+
+<rect x="510" y="265" width="180" height="48" rx="8" class="folderbox"/>
+<text x="600" y="296" text-anchor="middle" class="folder">tests/</text>
+
+<rect x="890" y="265" width="180" height="48" rx="8" class="folderbox"/>
+<text x="980" y="296" text-anchor="middle" class="folder">Archivos raíz</text>
+
+<path d="M220 313 V350" class="line"/>
+<rect x="130" y="350" width="180" height="48" rx="8" class="folderbox"/>
+<text x="220" y="381" text-anchor="middle" class="folder">jarvis/</text>
+
+<path d="M220 398 V430 H120 V455 M220 430 H320 V455" class="line"/>
+<rect x="40" y="455" width="160" height="48" rx="8" class="folderbox"/>
+<text x="120" y="486" text-anchor="middle" class="folder">ia/</text>
+<rect x="240" y="455" width="160" height="48" rx="8" class="folderbox"/>
+<text x="320" y="486" text-anchor="middle" class="folder">Módulos</text>
+
+<path d="M600 313 V350" class="line"/>
+<rect x="510" y="350" width="180" height="48" rx="8" class="folderbox"/>
+<text x="600" y="381" text-anchor="middle" class="folder">Archivos de prueba</text>
+
+<path d="M980 313 V350" class="line"/>
+<rect x="890" y="350" width="180" height="48" rx="8" class="folderbox"/>
+<text x="980" y="381" text-anchor="middle" class="folder">Archivos del proyecto</text>
+
+<!-- CÓDIGO FUENTE -->
+<text x="60" y="565" class="section">01 — CÓDIGO FUENTE</text>
+
+<rect x="50" y="590" width="1100" height="80" rx="10" class="panel"/>
+<text x="75" y="625" class="filename">src/</text>
+<text x="75" y="650" class="description">Contiene el código fuente del proyecto.</text>
+
+<rect x="50" y="685" width="1100" height="80" rx="10" class="panel"/>
+<text x="75" y="720" class="filename">src/jarvis/</text>
+<text x="75" y="745" class="description">Contiene el núcleo de JARVIS y sus capacidades.</text>
+
+<rect x="50" y="780" width="1100" height="80" rx="10" class="panel"/>
+<text x="75" y="815" class="filename">src/jarvis/ia/</text>
+<text x="75" y="840" class="description">Contiene el paquete de inteligencia artificial utilizado por JARVIS.</text>
+
+<!-- INTELIGENCIA ARTIFICIAL -->
+<text x="60" y="910" class="section">02 — src/jarvis/ia/</text>
+
+<rect x="50" y="935" width="1100" height="710" rx="10" class="panel"/>
+
+<g class="filename">
+  <text x="80" y="980">__init__.py</text>
+  <text x="80" y="1045">core.py</text>
+  <text x="80" y="1110">language.py</text>
+  <text x="80" y="1175">understanding.py</text>
+  <text x="80" y="1240">neural.py</text>
+  <text x="80" y="1305">learning.py</text>
+  <text x="80" y="1370">context.py</text>
+  <text x="80" y="1435">reasoning.py</text>
+  <text x="80" y="1500">executor.py</text>
+  <text x="80" y="1565">integrations.py</text>
+</g>
+
+<g class="description">
+  <text x="340" y="980">Inicialización del paquete de inteligencia artificial.</text>
+  <text x="340" y="1045">Coordina el cerebro de JARVIS.</text>
+  <text x="340" y="1110">Procesa el lenguaje.</text>
+  <text x="340" y="1175">Identifica intenciones y elementos de las instrucciones.</text>
+  <text x="340" y="1240">Contiene la arquitectura de redes neuronales.</text>
+  <text x="340" y="1305">Entrena y evalúa modelos propios.</text>
+  <text x="340" y="1370">Gestiona el contexto de las conversaciones.</text>
+  <text x="340" y="1435">Analiza problemas y planifica tareas.</text>
+  <text x="340" y="1500">Comunica las decisiones con las capacidades internas.</text>
+  <text x="340" y="1565">Gestiona conexiones opcionales con otras IA.</text>
+</g>
+
+<!-- MÓDULOS PRINCIPALES -->
+<text x="60" y="1700" class="section">03 — src/jarvis/</text>
+<rect x="50" y="1725" width="1100" height="330" rx="10" class="panel"/>
+
+<g class="filename">
+  <text x="80" y="1770">__init__.py</text>
+  <text x="80" y="1815">main.py</text>
+  <text x="80" y="1860">config.py</text>
+  <text x="80" y="1905">brain.py</text>
+  <text x="80" y="1950">memory.py</text>
+  <text x="600" y="1770">capabilities.py</text>
+  <text x="600" y="1815">platform.py</text>
+</g>
+
+<g class="description">
+  <text x="290" y="1770">Organiza los módulos como paquete de Python.</text>
+  <text x="290" y="1815">Inicia y coordina JARVIS.</text>
+  <text x="290" y="1860">Gestiona parámetros, rutas y configuraciones.</text>
+  <text x="290" y="1905">Procesa instrucciones.</text>
+  <text x="290" y="1950">Guarda y recupera información local.</text>
+  <text x="830" y="1770">Administra las funciones ejecutables.</text>
+  <text x="830" y="1815">Adapta las funciones a otros entornos.</text>
+</g>
+
+<!-- PRUEBAS -->
+<text x="60" y="2110" class="section">04 — tests/</text>
+<rect x="50" y="2135" width="1100" height="210" rx="10" class="panel"/>
+
+<g class="filename">
+  <text x="80" y="2180">__init__.py</text>
+  <text x="80" y="2225">test_core.py</text>
+  <text x="80" y="2270">test_config.py</text>
+  <text x="600" y="2180">test_memory_migration.py</text>
+</g>
+
+<g class="description">
+  <text x="290" y="2180">Organiza los módulos como paquete de Python.</text>
+  <text x="290" y="2225">Comprueba el funcionamiento del núcleo.</text>
+  <text x="290" y="2270">Comprueba que los directorios funcionen </text>
+  <text x="290" y="2293">independientemente de su posición.</text>
+  <text x="600" y="2225">Verifica el funcionamiento de la base de datos</text>
+  <text x="600" y="2248">independientemente de la carpeta del proyecto.</text>
+</g>
+
+<!-- ARCHIVOS PRINCIPALES -->
+<text x="60" y="2400" class="section">05 — ARCHIVOS PRINCIPALES</text>
+<rect x="50" y="2425" width="1100" height="110" rx="10" class="panel"/>
+
+<g class="filename">
+  <text x="80" y="2465">README.md</text>
+  <text x="400" y="2465">.gitignore</text>
+  <text x="750" y="2465">pyproject.toml</text>
+</g>
+
+<g class="description">
+  <text x="80" y="2495">Contiene la información principal para el usuario.</text>
+  <text x="400" y="2495">Evita guardar archivos innecesarios en Git.</text>
+  <text x="750" y="2495">Contiene la configuración del proyecto.</text>
+</g>
+
+<text x="600" y="2575" text-anchor="middle" class="subtitle">
+PROYECTO JARVIS FUNCIONAL · ESTRUCTURA Y DOCUMENTACIÓN
+</text>
+
+</svg>
