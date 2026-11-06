@@ -1,164 +1,241 @@
 # JARVIS FUNCIONAL
-## Proposito:
-En este proyecto intentaremos hacer un jarvis funcional.
-Un objetivo del proyecto es que jarvis sea capaz de administrar redes neuronales sencillas a peticion del usuario
-## Versión
-v0.3.0
-## Estado
-En este momento, Jarvis esta en fase 1. Jarvis solo poseé un nucleo que administra tres comandos simples, y memoria persistente con SQLite 3, en una tabla. Jarvis es capaz de ejecutarse en varios sistemas operativos como Windows, Linux y MACos. Ya que poseé un sistema de directorios independiente de la carpeta en la que se encuentre el proyecto.
-## Tabla de memoria de Jarvis
-|Campo|Tipo|Uso|
-|:---:|:---:|:---:|
-|ID|Int Autoincrement|Regula el orden de la tabla|
-|Key|Text Unique|Es una llave que guarda un dato|
-|Value|Text|El dato, en forma de texto a guardar. se busca con la llave|
 
-> La tabla es una forma provicional de guardado de datos. Con el desarrollo del proyecto se puede expandir y mejorar en un futuro.
+## Propósito
+
+JARVIS es un proyecto de asistente personal desarrollado principalmente en Python. Su objetivo es construir progresivamente una inteligencia artificial propia, capaz de comprender instrucciones, analizar información, aprender y ejecutar tareas mediante sus capacidades internas.
+
+Uno de los objetivos del proyecto es permitir que el usuario pueda crear, entrenar, administrar y ejecutar redes neuronales sencillas mediante instrucciones de diálogo.
+
+## Versión
+
+`v0.3.0`
+
+## Estado del proyecto
+
+JARVIS se encuentra actualmente en la **Fase 3: Cerebro e inteligencia**.
+
+El sistema cuenta con un núcleo inicial, memoria persistente mediante SQLite y procesamiento básico de comandos. Actualmente dispone de tres comandos principales para interactuar con sus funciones iniciales.
+
+El proyecto incluye una arquitectura modular para el desarrollo de su inteligencia, así como componentes propios para el procesamiento del lenguaje, la comprensión de instrucciones, el razonamiento básico y las redes neuronales.
+
+El motor neuronal implementa una red multicapa básica con inferencia y entrenamiento. Sin embargo, estos componentes todavía no constituyen una inteligencia artificial conversacional completa.
+
+La estructura de almacenamiento permite mantener los datos independientes de la ubicación del proyecto. Se contempla compatibilidad con Windows, Linux y macOS.
+
+## Memoria persistente
+
+La memoria inicial utiliza SQLite para almacenar información mediante una tabla con la siguiente estructura:
+
+| Campo | Tipo | Uso |
+|---|---|---|
+| ID | INTEGER AUTOINCREMENT | Identificador único y orden de los registros. |
+| Key | TEXT UNIQUE | Clave utilizada para identificar un dato. |
+| Value | TEXT | Información almacenada como texto. |
+
+Esta estructura constituye una implementación inicial. Podrá ampliarse conforme evolucionen las necesidades de memoria de JARVIS.
+
+## Estructuras de comunicación
+
+Se utilizan `dataclasses` de Python para establecer formatos estandarizados de comunicación entre los componentes.
+
+### `InputData` — Entrada
+
+- `text`: instrucción recibida (`str`).
+- `timestamp`: momento de recepción (`datetime`).
+- `source`: origen de la instrucción (`str`).
+
+### `AnalysisResult` — Análisis
+
+- `intent`: intención identificada (`str`).
+- `entities`: elementos relevantes extraídos (`dict`).
+- `confidence`: nivel de confianza estimado (`float`).
+- `understood`: indica si la instrucción fue comprendida (`bool`).
+
+### `ActionPlan` — Plan de acción
+
+- `actions`: acciones propuestas (`list`).
+- `parameters`: parámetros necesarios para las acciones (`dict`).
+- `requires_confirmation`: indica si se necesita autorización (`bool`).
+- `reason`: justificación del plan (`str`).
+
+### `ExecutionResult` — Resultado de ejecución
+
+- `success`: indica si la ejecución fue exitosa (`bool`).
+- `output`: resultado obtenido (`str`).
+- `error`: información del error, si existe (`str | None`).
+
+Estas estructuras permiten mantener una comunicación consistente, facilitar las pruebas y reducir las dependencias entre componentes.
+
 ## Organización de archivos
+
 <p align="center">
   <img src="estructura.svg" alt="Árbol de archivos de JARVIS" width="100%">
 </p>
 
->El proyecto continua en una fase temprana de desarrollo. Su estructura y funcionalidades cambiarán conforme a su construcción.
-
-## Plan de creación de Jarvis
+> El proyecto continúa en una fase temprana de desarrollo. Su estructura y funcionalidades evolucionarán conforme avance su construcción.
 
 ## Hoja de ruta
 
-- **Fase 1 — Núcleo inicial** <sub>Completada</sub>
-  - Estructura del proyecto.
-  - Detección del sistema y hardware.
-  - Memoria persistente con SQLite.
-  - Procesamiento básico de comandos.
-  - Pruebas automatizadas.
+### Fase 1 — Núcleo inicial
+<sub>Completada</sub>
 
-- **Fase 2 — Portabilidad y configuración** <sub>Completada</sub> 
-  - Almacenamiento adecuado para cada sistema operativo.
-  - Configuración centralizada.
-  - Rutas independientes de la ubicación del proyecto.
-  - Preparación para Windows y Linux.
+- Estructura inicial del proyecto.
+- Detección del sistema y hardware.
+- Memoria persistente con SQLite.
+- Procesamiento básico de comandos.
+- Pruebas automatizadas.
 
-- **Fase 3 — Cerebro e inteligencia**
-  - Integración de modelos de IA locales.
-  - Selección automática según el hardware.
-  - Sistema de razonamiento y comprensión de instrucciones.
-  - Funcionamiento básico sin conexión.
+### Fase 2 — Portabilidad y configuración
+<sub>Completada</sub>
 
-  Por Simplicidad, esta fase estará dividida en varias más, dependiendo de la potencia esperada en la IA.
+- Almacenamiento adecuado para cada sistema operativo.
+- Configuración centralizada.
+- Rutas independientes de la ubicación del proyecto.
+- Preparación para Windows y Linux.
 
-- **3.1. Arquitectura de inteligencia** <sub>Completada</sub>
-  - Diseñar la estructura interna del cerebro de JARVIS.
-  - Definir los componentes y su comunicación.
-  - Establecer una arquitectura modular, independiente y ampliable.
+### Fase 3 — Cerebro e inteligencia
+<sub>En desarrollo</sub>
 
-- **3.2. Procesamiento del lenguaje**
-  - Implementar un sistema propio de procesamiento del lenguaje.
-  - Desarrollar tokenización y normalización de texto.
-  - Identificar palabras, estructuras y elementos relevantes de las instrucciones.
+- Desarrollo de una inteligencia artificial propia.
+- Selección de capacidades según el hardware disponible.
+- Comprensión de instrucciones y razonamiento.
+- Funcionamiento local y sin conexión siempre que sea posible.
 
-- **3.3. Comprensión de intenciones**
-  - Reconocer las intenciones del usuario.
-  - Identificar entidades, parámetros y contexto.
-  - Relacionar instrucciones con las capacidades de JARVIS.
+Esta fase se divide en subfases para desarrollar y evaluar cada componente de manera independiente.
 
-- **3.4. Motor neuronal propio**
-  - Desarrollar las bases de una red neuronal desde cero.
-  - Implementar operaciones, capas y funciones de activación.
-  - Crear un sistema propio de inferencia.
+#### 3.1. Arquitectura de inteligencia
+<sub>Completada</sub>
 
-- **3.5. Entrenamiento y aprendizaje**
-  - Implementar algoritmos propios de entrenamiento.
-  - Crear y entrenar modelos pequeños especializados.
-  - Evaluar resultados y mejorar los modelos mediante entrenamiento controlado.
+- Diseñar la estructura interna del cerebro de JARVIS.
+- Definir los componentes y su comunicación.
+- Establecer una arquitectura modular, independiente y ampliable.
 
-- **3.6. Memoria contextual**
-  - Incorporar contexto a las conversaciones.
-  - Relacionar información actual con recuerdos anteriores.
-  - Mejorar la recuperación y utilización de información almacenada.
+#### 3.2. Procesamiento del lenguaje
 
-- **3.7. Razonamiento y planificación**
-  - Desarrollar mecanismos para analizar instrucciones.
-  - Dividir tareas complejas en pasos.
-  - Evaluar alternativas y seleccionar acciones.
-  - Gestionar errores y resultados inesperados.
+- Implementar un sistema propio de procesamiento del lenguaje.
+- Desarrollar tokenización y normalización de texto.
+- Identificar palabras, estructuras y elementos relevantes de las instrucciones.
 
-- **3.8. Integración con las capacidades de JARVIS**
-  - Conectar la inteligencia con los módulos internos.
-  - Traducir decisiones en acciones.
-  - Validar resultados y gestionar respuestas.
+#### 3.3. Comprensión de intenciones
 
-- **3.9. Integración opcional de modelos externos**
-  - Permitir conexiones con modelos de inteligencia artificial externos.
-  - Crear una interfaz independiente del proveedor o modelo.
-  - Mantener el funcionamiento completo de JARVIS sin conexiones externas.
-  - Permitir activar o desactivar estas integraciones.
+- Reconocer las intenciones del usuario.
+- Identificar entidades, parámetros y contexto.
+- Relacionar instrucciones con las capacidades de JARVIS.
 
-- **3.10. Optimización y evaluación**
-  - Optimizar el rendimiento y consumo de recursos.
-  - Evaluar precisión, velocidad y calidad de respuestas.
-  - Mejorar la compatibilidad con diferentes dispositivos.
-  - Realizar pruebas de funcionamiento offline.
+#### 3.4. Motor neuronal propio
 
-- **3.11. Consolidación del cerebro** 
-  - Integrar todos los componentes de inteligencia.
-  - Verificar su funcionamiento conjunto.
-  - Documentar la arquitectura y los mecanismos de aprendizaje.
-  - Preparar el sistema para las siguientes fases del proyecto.
+- Desarrollar las bases de una red neuronal desde cero.
+- Implementar operaciones, capas y funciones de activación.
+- Crear un sistema propio de inferencia.
 
-- **Fase 4 — Sistema de voz**
-  - Reconocimiento de voz.
-  - Síntesis de voz.
-  - Activación por voz, si el hardware lo permite.
-  - Conversación hablada.
+#### 3.5. Entrenamiento y aprendizaje
 
-- **Fase 5 — Memoria avanzada**
-  - Memoria a corto y largo plazo.
-  - Contexto de conversaciones.
-  - Organización y recuperación inteligente de información.
-  - Control del usuario sobre sus recuerdos.
+- Implementar algoritmos propios de entrenamiento.
+- Crear y entrenar modelos pequeños especializados.
+- Evaluar resultados y mejorar los modelos mediante entrenamiento controlado.
 
-- **Fase 6 — Herramientas y automatización**
-  - Ejecutar tareas locales autorizadas.
-  - Administrar archivos y carpetas.
-  - Automatizar tareas repetitivas.
-  - Sistema de permisos y confirmaciones.
+#### 3.6. Memoria contextual
 
-- **Fase 7 — Internet y conocimiento**
-  - Acceso opcional a Internet.
-  - Búsqueda de información.
-  - Consulta de fuentes y verificación.
-  - Capacidad de funcionar sin Internet cuando no sea necesario.
+- Incorporar contexto a las conversaciones.
+- Relacionar información actual con recuerdos anteriores.
+- Mejorar la recuperación y utilización de información almacenada.
 
-- **Fase 8 — Interfaz y experiencia**
-  - Interfaz gráfica.
-  - Panel de configuración.
-  - Historial de conversaciones.
-  - Personalización de voz y comportamiento.
+#### 3.7. Razonamiento y planificación
 
-- **Fase 9 — Adaptabilidad y multiplataforma**
-  - Detección de recursos disponibles.
-  - Ajuste automático de capacidades.
-  - Preparación para dispositivos de menor potencia.
-  - Evaluación de compatibilidad con Android.
+- Desarrollar mecanismos para analizar instrucciones.
+- Dividir tareas complejas en pasos.
+- Evaluar alternativas y seleccionar acciones.
+- Gestionar errores y resultados inesperados.
 
-- **Fase 10 — Seguridad, optimización y distribución**
-  - Protección de datos y permisos.
-  - Optimización de rendimiento.
-  - Pruebas de estabilidad.
-  - Instaladores y distribución gratuita.
-  - Documentación final.
+#### 3.8. Integración con las capacidades de JARVIS
+
+- Conectar la inteligencia con los módulos internos.
+- Traducir decisiones en acciones.
+- Validar resultados y gestionar respuestas.
+
+#### 3.9. Integración opcional de modelos externos
+
+- Permitir conexiones con modelos de inteligencia artificial externos.
+- Crear una interfaz independiente del proveedor o modelo.
+- Mantener el funcionamiento de las capacidades propias sin conexiones externas.
+- Permitir activar o desactivar estas integraciones.
+
+#### 3.10. Optimización y evaluación
+
+- Optimizar el rendimiento y consumo de recursos.
+- Evaluar precisión, velocidad y calidad de respuestas.
+- Mejorar la compatibilidad con diferentes dispositivos.
+- Realizar pruebas de funcionamiento sin conexión.
+
+#### 3.11. Consolidación del cerebro
+
+- Integrar todos los componentes de inteligencia.
+- Verificar su funcionamiento conjunto.
+- Documentar la arquitectura y los mecanismos de aprendizaje.
+- Preparar el sistema para las siguientes fases del proyecto.
+
+### Fase 4 — Sistema de voz
+
+- Reconocimiento de voz.
+- Síntesis de voz.
+- Activación por voz, si el hardware lo permite.
+- Conversación hablada.
+
+### Fase 5 — Memoria avanzada
+
+- Memoria a corto y largo plazo.
+- Contexto de conversaciones.
+- Organización y recuperación inteligente de información.
+- Control del usuario sobre sus recuerdos.
+
+### Fase 6 — Herramientas y automatización
+
+- Ejecutar tareas locales autorizadas.
+- Administrar archivos y carpetas.
+- Automatizar tareas repetitivas.
+- Sistema de permisos y confirmaciones.
+
+### Fase 7 — Internet y conocimiento
+
+- Acceso opcional a Internet.
+- Búsqueda de información.
+- Consulta de fuentes y verificación.
+- Funcionamiento sin Internet cuando no sea necesario.
+
+### Fase 8 — Interfaz y experiencia
+
+- Interfaz gráfica.
+- Panel de configuración.
+- Historial de conversaciones.
+- Personalización de voz y comportamiento.
+
+### Fase 9 — Adaptabilidad y multiplataforma
+
+- Detección de recursos disponibles.
+- Ajuste automático de capacidades.
+- Preparación para dispositivos de menor potencia.
+- Evaluación de compatibilidad con Android.
+
+### Fase 10 — Seguridad, optimización y distribución
+
+- Protección de datos y permisos.
+- Optimización de rendimiento.
+- Pruebas de estabilidad.
+- Instaladores y distribución gratuita.
+- Documentación final.
 
 ## Principios del proyecto
 
-- **Gratuito:** sin servicios de pago obligatorios.
-- **Local primero:** las funciones esenciales deben trabajar sin Internet.
-- **Python como lenguaje principal:** dependencias externas solo cuando aporten valor.
+- **Gratuito:** sin servicios de pago obligatorios ni suscripciones necesarias.
+- **Local primero:** las funciones esenciales deben trabajar sin Internet siempre que sea posible.
+- **Python como lenguaje principal:** dependencias externas únicamente cuando aporten un beneficio justificado.
 - **Adaptable:** ajustar las capacidades al hardware disponible.
 - **Portable:** evitar depender de una computadora o sistema operativo específico.
-- **Privacidad:** los datos personales permanecen bajo control del usuario.
+- **Privacidad:** los datos personales permanecen bajo el control del usuario.
 - **Modular:** cada capacidad debe poder mantenerse, sustituirse o desactivarse independientemente.
+- **Código limpio:** priorizar soluciones sencillas, eficientes y fáciles de mantener.
 
-## Diseño de IA
+## Diseño de inteligencia artificial
 
 ### Objetivo
 
@@ -172,7 +249,7 @@ El sistema será independiente de modelos y servicios externos, aunque permitir�
 - Tokenización y análisis de texto.
 - Identificación de intenciones del usuario.
 - Reconocimiento de entidades, parámetros y contexto.
-- Interpretación de instrucciones ambiguas o incompletas.
+- Interpretación progresiva de instrucciones ambiguas o incompletas.
 
 ### 2. Inteligencia y razonamiento
 
@@ -220,7 +297,7 @@ El sistema será independiente de modelos y servicios externos, aunque permitir�
 - Compatibilidad con diferentes modelos y proveedores.
 - Integración independiente del motor principal.
 - Activación y desactivación de conexiones externas.
-- Funcionamiento completo sin depender de estas integraciones.
+- Funcionamiento de las capacidades propias sin depender de estas integraciones.
 
 ### 8. Independencia y optimización
 
@@ -229,41 +306,18 @@ El sistema será independiente de modelos y servicios externos, aunque permitir�
 - Optimización del consumo de memoria y procesamiento.
 - Adaptación a los recursos disponibles.
 - Evaluación continua de precisión, velocidad y estabilidad.
-### Estructuras de comunicación
 
-Se utilizarán `dataclasses` de Python para establecer formatos estandarizados de comunicación entre los componentes.
-
-**InputData — Entrada**
-- `text`: instrucción original (`str`).
-- `timestamp`: momento de recepción (`datetime`).
-- `source`: origen de la instrucción (`str`).
-
-**AnalysisResult — Análisis**
-- `intent`: intención identificada (`str`).
-- `entities`: elementos relevantes (`dict`).
-- `confidence`: nivel de confianza estimado (`float`).
-- `understood`: indica si la instrucción fue comprendida (`bool`).
-
-**ActionPlan — Plan de acción**
-- `actions`: acciones propuestas (`list`).
-- `requires_confirmation`: indica si necesita autorización (`bool`).
-- `reason`: justificación del plan (`str`).
-
-**ExecutionResult — Resultado**
-- `success`: indica si la ejecución fue exitosa (`bool`).
-- `output`: resultado obtenido (`str`).
-- `error`: información del error, si existe (`str | None`).
-
-Estas estructuras permitirán mantener una comunicación consistente, facilitar las pruebas y reducir las dependencias entre componentes.
 ### Principios de desarrollo
 
 La inteligencia de JARVIS se desarrollará progresivamente, priorizando la comprensión de sus mecanismos internos y la creación de tecnología propia.
 
 Se evitará depender de soluciones externas cuando sea posible, sin descartar su utilización opcional cuando aporten mejoras significativas.
 
+El aprendizaje de los modelos será controlado y evaluado. La memoria de JARVIS y el entrenamiento de sus redes neuronales serán mecanismos independientes.
+
 ## Pruebas
 
-El proyecto cuenta con pruebas automatizadas desarrolladas mediante la biblioteca `unittest` de Python.
+El proyecto utiliza la biblioteca `unittest` de Python para realizar pruebas automatizadas de sus componentes.
 
 Para ejecutar todas las pruebas desde la raíz del proyecto, utiliza el siguiente comando en PowerShell:
 
@@ -279,14 +333,14 @@ python -m unittest discover -s tests -v
 |---|---|
 | `test_save_and_get_memory` | Guardar y recuperar información de la memoria. |
 | `test_update_memory` | Actualizar información previamente almacenada. |
-| `test_missing_memory` | Manejar correctamente la búsqueda de una clave inexistente. |
+| `test_missing_memory` | Manejar la búsqueda de una clave inexistente. |
 | `test_delete_memory` | Eliminar información de la memoria. |
 | `test_empty_memory_values` | Rechazar valores vacíos al guardar información. |
-| `test_remember_command` | Procesar correctamente el comando para recordar. |
-| `test_retrieve_command` | Procesar correctamente el comando para recuperar información. |
+| `test_remember_command` | Procesar el comando para recordar. |
+| `test_retrieve_command` | Procesar el comando para recuperar información. |
 | `test_empty_command` | Manejar instrucciones vacías. |
 | `test_help_command` | Mostrar la ayuda de JARVIS. |
-| `test_system_detection` | Detectar correctamente el sistema operativo. |
+| `test_system_detection` | Detectar el sistema operativo. |
 | `test_capabilities` | Verificar las capacidades detectadas del sistema. |
 
 #### `test_neural.py` — 8 pruebas
@@ -390,6 +444,10 @@ python -m unittest discover -s tests -v
 
 **Total: 65 pruebas automatizadas documentadas.**
 
-Estas pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
+Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 
-> Este proyecto se inició con fines mayormente de aprendizaje.
+> La cantidad indicada corresponde a las pruebas documentadas; su estado de ejecución debe verificarse mediante el comando anterior.
+
+---
+
+Proyecto iniciado con fines principalmente educativos, de investigación y desarrollo.

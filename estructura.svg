@@ -74,7 +74,7 @@ ESTRUCTURA Y DOCUMENTACIÓN DEL PROYECTO
 <!-- INTELIGENCIA ARTIFICIAL -->
 <text x="60" y="910" class="section">02 — src/jarvis/ia/</text>
 
-<rect x="50" y="935" width="1100" height="710" rx="10" class="panel"/>
+<rect x="50" y="934.147" width="1100" height="710" rx="10" class="panel"/>
 
 <g class="filename">
   <text x="80" y="980">__init__.py</text>
@@ -83,10 +83,11 @@ ESTRUCTURA Y DOCUMENTACIÓN DEL PROYECTO
   <text x="80" y="1175">understanding.py</text>
   <text x="80" y="1240">neural.py</text>
   <text x="80" y="1305">learning.py</text>
-  <text x="80" y="1370">context.py</text>
+  <text x="80" y="1369.147">context.py</text>
   <text x="80" y="1435">reasoning.py</text>
   <text x="80" y="1500">executor.py</text>
   <text x="80" y="1565">integrations.py</text>
+  <text x="80" y="1630">structures.py</text>
 </g>
 
 <g class="description">
@@ -100,6 +101,7 @@ ESTRUCTURA Y DOCUMENTACIÓN DEL PROYECTO
   <text x="340" y="1435">Analiza problemas y planifica tareas.</text>
   <text x="340" y="1500">Comunica las decisiones con las capacidades internas.</text>
   <text x="340" y="1565">Gestiona conexiones opcionales con otras IA.</text>
+  <text x="340.853" y="1630">Gestiona conexiones opcionales con otras IA.</text>
 </g>
 
 <!-- MÓDULOS PRINCIPALES -->
