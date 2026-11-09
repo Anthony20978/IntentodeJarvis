@@ -1,7 +1,7 @@
 import unittest
 from datetime import datetime
 from jarvis.ai.understanding import analyze_input
-from jarvis.ai.structures import InputData, AnalysisResult
+from jarvis.ai.structures import InputData
 class TestUnderstanding(unittest.TestCase):
     def create_input(self, text):
         return InputData(
@@ -43,5 +43,41 @@ class TestUnderstanding(unittest.TestCase):
     def test_invalid_input(self):
         with self.assertRaises(TypeError):
             analyze_input("ayuda")
+    def test_help_variations(self):
+        phrases = [
+            "necesito ayuda",
+            "puedes ayudarme",
+            "que puedes hacer",
+            "qué puedes hacer",
+        ]
+        for phrase in phrases:
+            with self.subTest(phrase=phrase):
+                result = analyze_input(self.create_input(phrase))
+                self.assertEqual(result.intent, "help")
+                self.assertTrue(result.understood)
+    def test_exit_variations(self):
+        phrases = {
+            "salir",
+            "exit",
+            "quit",
+            "cerrar jarvis",
+            "apagar jarvis",
+            "adios",
+            "adiós",
+        }
+        for phrase in phrases:
+            with self.subTest(phrase=phrase):
+                result = analyze_input(self.create_input(phrase))
+                self.assertEqual(result.intent, "exit")
+                self.assertTrue(result.understood)
+    def test_remember_empty_key(self):
+        result = analyze_input(self.create_input("recuerda : valor"))
+        self.assertEqual(result.intent, "unknown")
+    def test_remember_empty_value(self):
+        result = analyze_input(self.create_input("recuerda nombre:"))
+        self.assertEqual(result.intent, "unknown")
+    def test_recall_empty_key(self):
+        result = analyze_input(self.create_input("recupera"))
+        self.assertEqual(result.intent, "unknown")
 if __name__ == "__main__":
     unittest.main()

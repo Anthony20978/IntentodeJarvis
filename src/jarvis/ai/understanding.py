@@ -1,6 +1,23 @@
 import re
 from .language import normalize_text
 from .structures import InputData, AnalysisResult
+HELP_PHRASES = {
+    "ayuda",
+    "help",
+    "necesito ayuda",
+    "puedes ayudarme",
+    "que puedes hacer",
+    "qué puedes hacer",
+}
+EXIT_PHRASES = {
+    "salir",
+    "exit",
+    "quit",
+    "cerrar jarvis",
+    "apagar jarvis",
+    "adios",
+    "adiós",
+}
 def analyze_input(data: InputData) -> AnalysisResult:
     """Analiza una entrada e identifica su intención."""
     if not isinstance(data, InputData):
@@ -12,52 +29,52 @@ def analyze_input(data: InputData) -> AnalysisResult:
             intent="unknown",
             understood=False,
         )
-    # Identificar solicitudes de ayuda.
-    if normalized_text == "ayuda":
+    if normalized_text in HELP_PHRASES:
         return AnalysisResult(
             intent="help",
             confidence=1.0,
             understood=True,
         )
-    # Identificar solicitudes para salir.
-    if normalized_text == "salir":
+    if normalized_text in EXIT_PHRASES:
         return AnalysisResult(
             intent="exit",
             confidence=1.0,
             understood=True,
         )
-    # Identificar solicitudes para guardar información.
     remember_match = re.fullmatch(
         r"recuerda\s+(.+?)\s*:\s*(.+)",
         original_text,
         flags=re.IGNORECASE,
     )
     if remember_match:
-        return AnalysisResult(
-            intent="remember",
-            entities={
-                "key": remember_match.group(1).strip(),
-                "value": remember_match.group(2).strip(),
-            },
-            confidence=1.0,
-            understood=True,
-        )
-    # Identificar solicitudes para recuperar información.
+        key = remember_match.group(1).strip()
+        value = remember_match.group(2).strip()
+        if key and value:
+            return AnalysisResult(
+                intent="remember",
+                entities={
+                    "key": key,
+                    "value": value,
+                },
+                confidence=1.0,
+                understood=True,
+            )
     recall_match = re.fullmatch(
         r"recupera\s+(.+)",
         original_text,
         flags=re.IGNORECASE,
     )
     if recall_match:
-        return AnalysisResult(
-            intent="recall",
-            entities={
-                "key": recall_match.group(1).strip(),
-            },
-            confidence=1.0,
-            understood=True,
-        )
-    # No se reconoció ninguna intención.
+        key = recall_match.group(1).strip()
+        if key:
+            return AnalysisResult(
+                intent="recall",
+                entities={
+                    "key": key,
+                },
+                confidence=1.0,
+                understood=True,
+            )
     return AnalysisResult(
         intent="unknown",
         confidence=0.0,

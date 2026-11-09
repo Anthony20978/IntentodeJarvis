@@ -9,5 +9,6 @@ requires-python = ">=3.10"
 dependencies = []
 [project.scripts]
 jarvis = "jarvis.main:start_jarvis"
+test_jarvis = "jarvis.dev:run_tests"
 [tool.setuptools.packages.find]
 where = ["src"]

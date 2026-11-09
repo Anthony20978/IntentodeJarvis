@@ -324,7 +324,10 @@ Para ejecutar todas las pruebas desde la raíz del proyecto, utiliza el siguient
 ```powershell
 python -m unittest discover -s tests -v
 ```
-
+o bien el atajo de jarvis
+```powershell
+test_jarvis
+```
 ### Listado de pruebas
 
 #### `test_core.py` — 11 pruebas
@@ -397,7 +400,7 @@ python -m unittest discover -s tests -v
 | `test_legacy_database_is_preserved` | Verificar que la base de datos anterior no se elimina. |
 | `test_existing_database_is_not_overwritten` | Evitar sobrescribir una base de datos existente. |
 
-#### `test_language.py` — 4 pruebas
+#### `test_language.py` — 10 pruebas
 
 | Nombre de la prueba | Qué verifica |
 |---|---|
@@ -405,18 +408,29 @@ python -m unittest discover -s tests -v
 | `test_tokenize` | Dividir el texto en palabras y signos de puntuación. |
 | `test_prepare_text` | Preparar correctamente el texto normalizado. |
 | `test_invalid_input` | Rechazar entradas que no sean cadenas de texto. |
+| `test_normalize_for_matching` | Normaliza palabras eliminando tildes. |
+| `test_normalize_for_matching_preserves_enye` | Conserva correctamente la letra ñ. |
+| `test_normalize_for_matching_preserves_umlaut` | Normaliza la diéresis. |
+| `test_normalize_for_matching_multiple_accents` | Normaliza múltiples palabras con tildes. |
+| `test_tokenize_unicode` | Comprueba la separación de texto Unicode y puntuación. |
+| `test_tokenize_empty_text` | Comprueba el procesamiento de entradas vacías. |
 
-#### `test_understanding.py` — 7 pruebas
+### `test_understanding.py` — 12 pruebas
 
-| Nombre de la prueba | Qué verifica |
+| Prueba | Descripción |
 |---|---|
-| `test_help_intent` | Reconocer la intención de solicitar ayuda. |
-| `test_exit_intent` | Reconocer la intención de salir. |
-| `test_remember_intent` | Reconocer el comando para recordar y extraer clave y valor. |
-| `test_recall_intent` | Reconocer el comando para recuperar información y extraer la clave. |
-| `test_unknown_intent` | Identificar intenciones desconocidas. |
-| `test_empty_input` | Manejar entradas vacías. |
-| `test_invalid_input` | Rechazar entradas de tipos incorrectos. |
+| `test_help_intent` | Reconoce la intención de solicitar ayuda. |
+| `test_exit_intent` | Reconoce la intención de salir. |
+| `test_remember_intent` | Identifica solicitudes para guardar información. |
+| `test_recall_intent` | Identifica solicitudes para recuperar información. |
+| `test_unknown_intent` | Maneja intenciones desconocidas. |
+| `test_empty_input` | Maneja entradas vacías. |
+| `test_invalid_input` | Rechaza entradas que no sean InputData. |
+| `test_help_variations` | Reconoce distintas expresiones de ayuda. |
+| `test_exit_variations` | Reconoce distintas expresiones de salida. |
+| `test_remember_empty_key` | Rechaza solicitudes sin clave. |
+| `test_remember_empty_value` | Rechaza solicitudes sin valor. |
+| `test_recall_empty_key` | Rechaza solicitudes de recuperación sin clave. |
 
 #### `test_learning.py` — 8 pruebas
 
@@ -431,6 +445,21 @@ python -m unittest discover -s tests -v
 | `test_invalid_dimensions` | Rechazo de entradas y objetivos con dimensiones incorrectas. |
 | `test_non_finite_values` | Rechazo de datos con valores infinitos. |
 
+### `test_ai_core.py` — 10 pruebas
+
+| Prueba | Descripción |
+|---|---|
+| `test_process_input` | Verifica la integración del análisis y generación de planes. |
+| `test_unknown_intent` | Verifica el manejo de intenciones desconocidas. |
+| `test_add_input_history` | Comprueba el registro de entradas en el historial. |
+| `test_history_limit` | Verifica el límite de almacenamiento del historial. |
+| `test_clear_history` | Comprueba la limpieza del historial. |
+| `test_execute_confirmed_action` | Verifica la ejecución de acciones autorizadas. |
+| `test_confirmation_required` | Comprueba que las acciones requieran autorización. |
+| `test_invalid_input` | Verifica el rechazo de entradas incorrectas. |
+| `test_invalid_handlers` | Comprueba la validación de los manejadores. |
+| `test_invalid_plan` | Verifica el rechazo de planes incorrectos. |
+
 #### `test_context.py` — 6 pruebas
 
 | Nombre de la prueba | Qué verifica |
@@ -442,7 +471,7 @@ python -m unittest discover -s tests -v
 | `test_invalid_input` | Rechazar entradas que no sean objetos `InputData`. |
 | `test_invalid_history_limit` | Rechazar límites de historial inválidos. |
 
-**Total: 65 pruebas automatizadas documentadas.**
+**Total: 86 pruebas automatizadas documentadas.**
 
 Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 
