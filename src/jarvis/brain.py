@@ -3,7 +3,7 @@ from collections.abc import Callable
 from . import memory
 from .ai.core import AICore
 from .ai.integrations import IntegrationRegistry
-from .ai.structures import InputData,ActionPlan
+from .ai.structures import InputData,ActionPlan, AnalysisResult
 IntegrationHandler = Callable[[dict], str]
 def _save_memory(key: str, value: str) -> str:
     """Guarda información en la memoria persistente."""
@@ -109,8 +109,9 @@ def process_command(command: str) -> str:
     try:
         analysis, plan = _AI_CORE.process_input(input_data)
         # Estas operaciones no requieren confirmación.
-        if analysis.intent in {"help", "exit", "recall"}:
-            plan.requires_confirmation = False
+        if isinstance(analysis, AnalysisResult):    
+            if analysis.intent in {"help", "exit", "recall"}:
+                plan.requires_confirmation = False
         if not analysis.understood:
             return "Todavía no tengo una función para realizar esa tarea."
         if not plan.actions:
@@ -132,15 +133,15 @@ def process_command(command: str) -> str:
         _PENDING_ACTION_INDEX = 0
         return "Ha ocurrido un error al procesar la instrucción."
 def _format_action_plan(plan: ActionPlan) -> str:
-    """Presenta el plan y sus opciones de autorización."""
+    """Presenta las acciones y sus parámetros."""
     lines = [
         "He preparado el siguiente plan:",
         "",
         "PLAN DE EJECUCIÓN:",
     ]
     for index, action in enumerate(plan.actions, start=1):
-        lines.append(f"{index}. {action}")
-        for key, value in plan.parameters.items():
+        lines.append(f"{index}. {action.name}")
+        for key, value in action.parameters.items():
             lines.append(f"   {key} = {value}")
     if plan.reason:
         lines.extend(("", f"Motivo: {plan.reason}"))
@@ -153,13 +154,13 @@ def _format_action_plan(plan: ActionPlan) -> str:
     ))
     return "\n".join(lines)
 def _format_next_action(plan: ActionPlan, index: int) -> str:
-    """Presenta la siguiente acción que requiere autorización."""
+    """Presenta la siguiente acción pendiente."""
     action = plan.actions[index]
     lines = [
         f"Siguiente acción ({index + 1}/{len(plan.actions)}):",
-        f"Acción: {action}",
+        f"Acción: {action.name}",
     ]
-    for key, value in plan.parameters.items():
+    for key, value in action.parameters.items():
         lines.append(f"   {key} = {value}")
     lines.extend((
         "",
@@ -172,15 +173,16 @@ def _execute_pending_actions(
     start: int,
     all_remaining: bool,
 ) -> str:
-    """Ejecuta las acciones autorizadas mediante AICore."""
+    """Ejecuta únicamente las acciones autorizadas."""
     global _PENDING_PLAN, _PENDING_ACTION_INDEX
     plan = _PENDING_PLAN
+    if plan is None:
+        return "No hay acciones pendientes de autorización."
     stop = len(plan.actions) if all_remaining else start + 1
     outputs = []
     for action in plan.actions[start:stop]:
         single_plan = ActionPlan(
             actions=[action],
-            parameters=dict(plan.parameters),
             requires_confirmation=True,
             reason=plan.reason,
         )
@@ -192,11 +194,11 @@ def _execute_pending_actions(
         except Exception as error:
             _PENDING_PLAN = None
             _PENDING_ACTION_INDEX = 0
-            return f"Error al ejecutar {action}: {error}"
+            return f"Error al ejecutar {action.name}: {error}"
         if not result.success:
             _PENDING_PLAN = None
             _PENDING_ACTION_INDEX = 0
-            return result.error or f"No se pudo ejecutar: {action}."
+            return result.error or f"No se pudo ejecutar: {action.name}."
         if result.output:
             outputs.append(result.output)
     _PENDING_ACTION_INDEX = stop
@@ -207,12 +209,11 @@ def _execute_pending_actions(
             "Plan autorizado. Todas las acciones se ejecutaron correctamente.\n"
             + "\n".join(outputs)
         )
-    next_action = _format_next_action(plan, stop)
     return (
         "Acción ejecutada correctamente.\n"
         + "\n".join(outputs)
         + "\n\n"
-        + next_action
+        + _format_next_action(plan, stop)
     )
 def _handle_pending_confirmation(command: str) -> str:
     """Procesa las respuestas de autorización del usuario."""

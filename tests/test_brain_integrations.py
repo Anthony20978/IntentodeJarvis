@@ -5,7 +5,7 @@ from src.jarvis.brain import (
     register_integration,
     unregister_integration,
 )
-from src.jarvis.ai.structures import ActionPlan
+from src.jarvis.ai.structures import ActionPlan,Action
 class TestBrainIntegrations(unittest.TestCase):
     def setUp(self):
         self.name = "test_custom_integration"
@@ -22,8 +22,12 @@ class TestBrainIntegrations(unittest.TestCase):
             lambda parameters: f"Hola, {parameters['name']}.",
         )
         plan = ActionPlan(
-            actions=[self.name],
-            parameters={"name": "JARVIS"},
+            actions=[
+                Action(
+                    name=self.name,
+                    parameters={"name": "JARVIS"},
+                )
+            ],
             requires_confirmation=False,
         )
         result = _AI_CORE.execute_plan(plan)

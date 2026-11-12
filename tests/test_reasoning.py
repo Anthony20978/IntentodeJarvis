@@ -1,6 +1,6 @@
 import unittest
 from jarvis.ai.reasoning import create_action_plan
-from jarvis.ai.structures import AnalysisResult, ActionPlan
+from jarvis.ai.structures import AnalysisResult, ActionPlan, Action, AnalysisBatch, AnalysisResult
 class TestReasoning(unittest.TestCase):
     def test_help_plan(self):
         analysis = AnalysisResult(
@@ -9,7 +9,10 @@ class TestReasoning(unittest.TestCase):
             understood=True,
         )
         plan = create_action_plan(analysis)
-        self.assertEqual(plan.actions, ["show_help"])
+        self.assertEqual(plan.actions[0].name, "show_help")
+        self.assertEqual(plan.actions[0].parameters, {})
+        self.assertTrue(plan.requires_confirmation)
+        self.assertEqual(len(plan.actions), 1)
     def test_remember_plan(self):
         analysis = AnalysisResult(
             intent="remember",
@@ -18,8 +21,16 @@ class TestReasoning(unittest.TestCase):
             understood=True,
         )
         plan = create_action_plan(analysis)
-        self.assertEqual(plan.actions, ["store_memory"])
-        self.assertEqual(plan.parameters["key"], "nombre")
+        self.assertEqual(len(plan.actions), 1)
+        self.assertEqual(plan.actions[0].name, "store_memory")
+        self.assertEqual(
+            plan.actions[0].parameters["key"],
+            "nombre",
+        )
+        self.assertEqual(
+            plan.actions[0].parameters["value"],
+            "Jarvis",
+        )
         self.assertTrue(plan.requires_confirmation)
     def test_unknown_plan(self):
         analysis = AnalysisResult(
@@ -68,7 +79,8 @@ class TestReasoning(unittest.TestCase):
             understood=True,
         )
         plan = create_action_plan(analysis)
-        self.assertEqual(plan.actions, ["show_help"])
+        self.assertEqual(plan.actions[0].name, "show_help")
+        self.assertEqual(plan.actions[0].parameters, {})
     def test_custom_minimum_confidence(self):
         analysis = AnalysisResult(
             intent="help",
@@ -105,8 +117,8 @@ class TestReasoning(unittest.TestCase):
             understood=True,
         )
         plan = create_action_plan(analysis)
-        self.assertEqual(plan.actions, ["show_status"])
-        self.assertEqual(plan.parameters["integration"], "show_status")
+        self.assertEqual(plan.actions[0].name, "show_status")
+        self.assertEqual(plan.actions[0].parameters, {})
         self.assertTrue(plan.requires_confirmation)
     def test_integration_plan_rejects_missing_name(self):
         analysis = AnalysisResult(
@@ -130,5 +142,53 @@ class TestReasoning(unittest.TestCase):
                 plan = create_action_plan(analysis)
                 self.assertEqual(plan.actions, [])
                 self.assertFalse(plan.requires_confirmation)
+    def test_create_action_plan_from_multiple_analyses(self):
+        batch = AnalysisBatch(
+            results=[
+                AnalysisResult(
+                    intent="remember",
+                    entities={"key": "proyecto", "value": "JARVIS"},
+                    confidence=1.0,
+                    understood=True,
+                ),
+                AnalysisResult(
+                    intent="remember",
+                    entities={"key": "lenguaje", "value": "Python"},
+                    confidence=1.0,
+                    understood=True,
+                ),
+            ]
+        )
+        plan = create_action_plan(batch)
+        self.assertEqual(len(plan.actions), 2)
+        self.assertEqual(plan.actions[0].name, "store_memory")
+        self.assertEqual(plan.actions[1].name, "store_memory")
+        self.assertEqual(
+            plan.actions[0].parameters["value"],
+            "JARVIS",
+        )
+        self.assertEqual(
+            plan.actions[1].parameters["value"],
+            "Python",
+        )
+    def test_create_action_plan_skips_unrecognized_analyses(self):
+        batch = AnalysisBatch(
+            results=[
+                AnalysisResult(
+                    intent="unknown",
+                    confidence=0.0,
+                    understood=False,
+                ),
+                AnalysisResult(
+                    intent="remember",
+                    entities={"key": "proyecto", "value": "JARVIS"},
+                    confidence=1.0,
+                    understood=True,
+                ),
+            ]
+        )
+        plan = create_action_plan(batch)
+        self.assertEqual(len(plan.actions), 1)
+        self.assertEqual(plan.actions[0].name, "store_memory")
 if __name__ == "__main__":
     unittest.main()

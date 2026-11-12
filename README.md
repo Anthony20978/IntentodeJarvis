@@ -14,7 +14,7 @@ python -m pip install -e .
 
 ## Versión
 
-`v0.3.1`
+`v0.3.2`
 
 ## Estado del proyecto
 
@@ -27,6 +27,7 @@ El proyecto incluye una arquitectura modular para el desarrollo de su inteligenc
 El motor neuronal implementa una red multicapa básica con inferencia y entrenamiento. Sin embargo, estos componentes todavía no constituyen una inteligencia artificial conversacional completa.
 
 La estructura de almacenamiento permite mantener los datos independientes de la ubicación del proyecto. Se contempla compatibilidad con Windows, Linux y macOS.
+Estamos implementando la posibilidad de reconocer más de una accion en un solo comando.
 
 ## Memoria persistente
 
@@ -57,14 +58,19 @@ Se utilizan `dataclasses` de Python para establecer formatos estandarizados de c
 - `confidence`: nivel de confianza estimado (`float`).
 - `understood`: indica si la instrucción fue comprendida (`bool`).
 
+### ### `AnalysisBatch` — Análisis
+
+- `results`: una lista con todas las intenciones de una tarea, que puede ser compuesta (`list[AnalysisResult]`).
+
 ### `Action` — Acción individual
 
 - `name`: Nombre de la accion (`list[Action]`).
-- `parameters`: Parametros necesarios para la acción. (`bool`).
+- `parameters`: Parametros necesarios para la acción. (`dict`).
 
 ### `ActionPlan` — Plan de acción
 
 - `actions`: acciones propuestas (`list[Action]`).
+- `parameters`: Parametros necesarios para el plan. (`dict`).
 - `requires_confirmation`: indica si se necesita autorización (`bool`).
 - `reason`: justificación del plan (`str`).
 
@@ -370,20 +376,21 @@ test_jarvis
 | `test_invalid_input_size` | Rechazo de entradas con dimensiones incorrectas. |
 | `test_invalid_input_values` | Rechazo de entradas no numéricas o no finitas. |
 
-#### `test_executor.py` — 8 pruebas
+#### `test_executor.py` — 9 pruebas
 
 | Nombre de la prueba | Qué verifica |
 |---|---|
 | `test_execute_confirmed_action` | Ejecución de una acción después de recibir confirmación. |
 | `test_confirmation_required` | Bloqueo de acciones que no han sido confirmadas. |
 | `test_execute_with_parameters` | Entrega correcta de parámetros a la acción ejecutada. |
+|`test_actions_use_independent_parameters`|Prueba que las acciones usen los parametros independientes.|
 | `test_unknown_action` | Rechazo de acciones que no están registradas. |
 | `test_empty_plan` | Manejo de planes sin acciones. |
 | `test_execution_error` | Manejo de errores durante la ejecución. |
 | `test_invalid_plan` | Rechazo de planes que no sean objetos `ActionPlan`. |
 | `test_invalid_confirmation` | Rechazo de valores de confirmación incorrectos. |
 
-#### `test_reasoning.py` — 11 pruebas
+#### `test_reasoning.py` — 13 pruebas
 
 | Nombre de la prueba | Qué verifica |
 |---|---|
@@ -401,6 +408,8 @@ test_jarvis
 |`test_integration_plan_uses_requested_handler`|Prueba que el diseño del plan tome en cuenta los comandos.|
 |`test_integration_plan_rejects_missing_name`|Prueba que un comando sin nombre no se ejecute.|
 |`test_integration_plan_rejects_invalid_name`|Prueba que un comando sin un nombre valido no se ejecute.|
+|`test_create_action_plan_from_multiple_analyses`|Revisa que se pueda crear un plan con más de una intención.|
+|`test_create_action_plan_skips_unrecognized_analyses`|Prueba que el plan ignora las intenciones no reconocidas.|
 
 #### `test_config.py` — 5 pruebas
 
@@ -435,7 +444,7 @@ test_jarvis
 | `test_tokenize_unicode` | Comprueba la separación de texto Unicode y puntuación. |
 | `test_tokenize_empty_text` | Comprueba el procesamiento de entradas vacías. |
 
-### `test_understanding.py` — 20 pruebas <sub>Archivo con más pruebas</sub>
+#### `test_understanding.py` — 22 pruebas <sub>Archivo con más pruebas</sub>
 
 | Prueba | Descripción |
 |---|---|
@@ -464,6 +473,8 @@ test_jarvis
 | `test_unknown_integration_is_not_recognized` | Rechazar integraciones que no existen en el registro. |
 | `test_integration_command_requires_registry` | Evitar reconocer integraciones cuando no se proporciona un registro. |
 | `test_invalid_available_integrations` | Rechazar registros de integraciones con tipos inválidos. |
+|`test_analyze_multiple_remember_instructions`|Prueba que se pueda implementar más de una instrucción.|
+|`test_analyze_single_instruction_returns_analysis_result`|Prueba que analizar una sola instruccion devuelva el analysis correspondiente.|
 
 #### `test_learning.py` — 8 pruebas
 
@@ -478,7 +489,7 @@ test_jarvis
 | `test_invalid_dimensions` | Rechazo de entradas y objetivos con dimensiones incorrectas. |
 | `test_non_finite_values` | Rechazo de datos con valores infinitos. |
 
-### `test_ai_core.py` — 17 pruebas
+#### `test_ai_core.py` — 19 pruebas
 
 | Prueba | Descripción |
 |---|---|
@@ -499,6 +510,8 @@ test_jarvis
 |`test_process_input_uses_conversation_context`|Revisa si el nucleo usa el contexto para analizar la entrada.|
 |`test_get_relevant_context_returns_formatted_text`|Revisa que el nucleo sea capaz de obtener texto conversacional.|
 |`test_get_relevant_context_respects_min_score`|Revisa que el contexto respete la puntuacion minima.|
+|`test_process_input_returns_analysis_batch`|Revisa que al procesar se regrese un analysisbatch.|
+|`test_process_input_preserves_single_analysis`|Revisa que el analisis batch contenga objetos del tipo analisys.|
 
 #### `test_context.py` — 15 pruebas
 
@@ -550,7 +563,16 @@ test_jarvis
 | `test_invalid_integration_handler` | Rechazar manejadores que no sean funciones ejecutables. |
 | `test_get_integrations_returns_copy` | Evitar que modificar la copia de integraciones altere el registro original. |
 
-**#### `test_brain_confirmation.py` — 9 pruebas**
+#### `test_brain_confirmation.py` — 4 pruebas
+
+| Nombre de la prueba | Descripción |
+|---|---|
+| `test_action_stores_name_and_parameters` | Prueba la persistencia de parametros y el nombre de las acciones.|
+| `test_action_has_empty_parameters_by_default` | Prueba que por defecto los parametros estén vacion. |
+| `test_actions_have_independent_parameters` | Verifica que las acciones tengan parametros independientes. |
+| `test_action_plan_stores_multiple_actions` | Verifica que un plan pueda contener más de una acción. |
+
+#### `test_structures.py` — 13 pruebas
 
 | Nombre de la prueba | Descripción |
 |---|---|
@@ -563,8 +585,12 @@ test_jarvis
 | `test_new_instruction_is_not_processed_while_plan_is_pending` | Impide procesar instrucciones nuevas durante la confirmación. |
 | `test_s_without_pending_plan_does_not_execute_actions` | Impide ejecutar acciones sin un plan pendiente. |
 | `test_execution_failure_clears_pending_plan` | Limpia el plan cuando ocurre un error de ejecución. |
+|`test_analysis_batch_accepts_multiple_results`|Prueba que el batch acepte muchas intenciones.|
+|`test_analysis_batch_accepts_empty_results`|Ve si se aceptan resultados vacios.|
+|`test_analysis_batch_rejects_non_list`|Revisa que no acepte analisis sin lista.|
+|`test_analysis_batch_rejects_invalid_results`|Revisa que rechaze resultados invalidos.|
 
-**Total: 153 pruebas automatizadas documentadas.**
+**Total: 167 pruebas automatizadas documentadas.**
 
 Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 

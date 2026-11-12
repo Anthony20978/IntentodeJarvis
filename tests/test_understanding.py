@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import Mock
 from datetime import datetime
 from jarvis.ai.understanding import analyze_input
-from jarvis.ai.structures import InputData
+from jarvis.ai.structures import InputData, AnalysisResult, AnalysisBatch
 class TestUnderstanding(unittest.TestCase):
     def create_input(self, text):
         return InputData(
@@ -196,5 +196,35 @@ class TestUnderstanding(unittest.TestCase):
                 self.create_input("ejecuta show_status"),
                 available_integrations=["show_status"],
             )
+    def test_analyze_multiple_remember_instructions(self):
+        data = InputData(
+            text=(
+                "Recuerda proyecto: JARVIS "
+                "y recuerda lenguaje: Python"
+            ),
+            timestamp=datetime.now(),
+            source="user",
+        )
+        result = analyze_input(data)
+        self.assertIsInstance(result, AnalysisBatch)
+        self.assertEqual(len(result.results), 2)
+        self.assertEqual(result.results[0].intent, "remember")
+        self.assertEqual(
+            result.results[0].entities["value"],
+            "JARVIS",
+        )
+        self.assertEqual(result.results[1].intent, "remember")
+        self.assertEqual(
+            result.results[1].entities["value"],
+            "Python",
+        )
+def test_analyze_single_instruction_returns_analysis_result(self):
+    data = InputData(
+        text="Recuerda proyecto: JARVIS",
+        timestamp=datetime.now(),
+        source="user",
+    )
+    result = analyze_input(data)
+    self.assertIsInstance(result, AnalysisResult)
 if __name__ == "__main__":
     unittest.main()

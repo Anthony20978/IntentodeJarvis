@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from src.jarvis import brain
 from src.jarvis.ai.structures import (
+    Action,
     ActionPlan,
     AnalysisResult,
     ExecutionResult,
@@ -11,8 +12,11 @@ class TestBrainConfirmation(unittest.TestCase):
         brain._PENDING_PLAN = None
         brain._PENDING_ACTION_INDEX = 0
         self.plan = ActionPlan(
-            actions=["first", "second", "third"],
-            parameters={"value": "test"},
+            actions=[
+                Action(name="first"),
+                Action(name="second"),
+                Action(name="third"),
+            ],
             requires_confirmation=True,
             reason="Prueba de confirmación.",
         )
@@ -31,7 +35,7 @@ class TestBrainConfirmation(unittest.TestCase):
             "execute_plan",
             side_effect=lambda plan, confirmed=False: ExecutionResult(
                 success=True,
-                output=f"Ejecutada: {plan.actions[0]}",
+                output=f"Ejecutada: {plan.actions[0].name}",
             ),
         )
         self.process_input = self.process_patch.start()
@@ -51,7 +55,11 @@ class TestBrainConfirmation(unittest.TestCase):
         brain.process_command("instrucción")
         response = brain.process_command("S")
         executed_plan = self.execute_plan.call_args.args[0]
-        self.assertEqual(executed_plan.actions, ["first"])
+        self.assertEqual(len(executed_plan.actions), 1)
+        self.assertEqual(
+            executed_plan.actions[0].name,
+            "first",
+        )
         self.assertTrue(
             self.execute_plan.call_args.kwargs["confirmed"]
         )
@@ -62,7 +70,7 @@ class TestBrainConfirmation(unittest.TestCase):
         brain.process_command("S")
         response = brain.process_command("O")
         executed_actions = [
-            call.args[0].actions[0]
+            call.args[0].actions[0].name
             for call in self.execute_plan.call_args_list
         ]
         self.assertEqual(
@@ -76,7 +84,7 @@ class TestBrainConfirmation(unittest.TestCase):
         brain.process_command("instrucción")
         brain.process_command("O")
         executed_actions = [
-            call.args[0].actions[0]
+            call.args[0].actions[0].name
             for call in self.execute_plan.call_args_list
         ]
         self.assertEqual(

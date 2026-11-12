@@ -13,7 +13,20 @@ class AnalysisResult:
     entities: dict = field(default_factory=dict)
     confidence: float = 0.0
     understood: bool = False
-"""
+@dataclass
+class AnalysisBatch:
+    """Agrupa varios resultados de análisis independientes."""
+    results: list[AnalysisResult] = field(default_factory=list)
+    def __post_init__(self):
+        if not isinstance(self.results, list):
+            raise TypeError("results debe ser una lista.")
+        if not all(
+            isinstance(result, AnalysisResult)
+            for result in self.results
+        ):
+            raise TypeError(
+                "Todos los elementos deben ser AnalysisResult."
+            )
 @dataclass
 class Action:
     #Representa una acción individual de JARVIS
@@ -23,13 +36,6 @@ class Action:
 class ActionPlan:
     #Representa un conjunto de acciones independientes.
     actions: list[Action] = field(default_factory=list)
-    requires_confirmation: bool = True
-    reason: str = ""
-"""
-@dataclass
-class ActionPlan:
-    """Representa las acciones que JARVIS pretende realizar."""
-    actions: list[str] = field(default_factory=list)
     parameters: dict = field(default_factory=dict)
     requires_confirmation: bool = True
     reason: str = ""

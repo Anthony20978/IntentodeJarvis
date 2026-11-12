@@ -1,7 +1,7 @@
 import re
 from collections.abc import Mapping
 from .language import normalize_text
-from .structures import InputData, AnalysisResult
+from .structures import InputData, AnalysisResult, AnalysisBatch
 HELP_PHRASES = {
     "ayuda",
     "help",
@@ -19,6 +19,15 @@ EXIT_PHRASES = {
     "adios",
     "adiós",
 }
+# Detecta el inicio de otra instrucción después de "y".
+COMMAND_PATTERN = re.compile(
+    r"\s+y\s+(?="
+    r"recuerda\s+.+?:|"
+    r"recupera\s+|"
+    r"ejecuta\s+"
+    r")",
+    flags=re.IGNORECASE,
+)
 def _format_relevant_context(context, query: str) -> str:
     """Recupera y formatea el contexto relacionado con una consulta."""
     if not callable(getattr(context, "find_relevant", None)):
@@ -41,21 +50,14 @@ def _format_relevant_context(context, query: str) -> str:
             label = data.source.capitalize()
         lines.append(f"{label}: {data.text}")
     return "\n".join(lines)
-def analyze_input(
+def _analyze_single(
     data: InputData,
     context=None,
     available_integrations: Mapping[str, object] | None = None,
 ) -> AnalysisResult:
-    """Analiza una entrada e identifica su intención."""
-    if not isinstance(data, InputData):
-        raise TypeError("Se esperaba un objeto InputData.")
+    """Analiza una instrucción individual."""
     original_text = data.text.strip()
     normalized_text = normalize_text(original_text)
-    if (
-        available_integrations is not None
-        and not isinstance(available_integrations, Mapping)
-    ):
-        raise TypeError("available_integrations debe ser un Mapping.")
     if not normalized_text:
         return AnalysisResult(
             intent="unknown",
@@ -120,9 +122,7 @@ def analyze_input(
         if key:
             return AnalysisResult(
                 intent="recall",
-                entities={
-                    "key": key,
-                },
+                entities={"key": key},
                 confidence=1.0,
                 understood=True,
             )
@@ -140,3 +140,48 @@ def analyze_input(
         confidence=0.0,
         understood=False,
     )
+def analyze_input(
+    data: InputData,
+    context=None,
+    available_integrations: Mapping[str, object] | None = None,
+) -> AnalysisResult | AnalysisBatch:
+    """Analiza una entrada y reconoce una o varias instrucciones."""
+    if not isinstance(data, InputData):
+        raise TypeError("Se esperaba un objeto InputData.")
+    if (
+        available_integrations is not None
+        and not isinstance(available_integrations, Mapping)
+    ):
+        raise TypeError("available_integrations debe ser un Mapping.")
+    original_text = data.text.strip()
+    if not original_text:
+        return AnalysisResult(
+            intent="unknown",
+            understood=False,
+        )
+    instructions = [
+        part.strip()
+        for part in COMMAND_PATTERN.split(original_text)
+        if part.strip()
+    ]
+    if len(instructions) == 1:
+        return _analyze_single(
+            data,
+            context,
+            available_integrations,
+        )
+    results = []
+    for instruction in instructions:
+        individual_input = InputData(
+            text=instruction,
+            timestamp=data.timestamp,
+            source=data.source,
+        )
+        results.append(
+            _analyze_single(
+                individual_input,
+                context,
+                available_integrations,
+            )
+        )
+    return AnalysisBatch(results=results)

@@ -3,7 +3,9 @@ from datetime import datetime
 from jarvis.ai.core import AICore
 from jarvis.ai.structures import (
     ActionPlan,
+    AnalysisResult,
     InputData,
+    AnalysisBatch
 )
 class TestAICore(unittest.TestCase):
     def setUp(self):
@@ -22,7 +24,9 @@ class TestAICore(unittest.TestCase):
             self.create_input("ayuda")
         )
         self.assertEqual(analysis.intent, "help")
-        self.assertEqual(plan.actions, ["show_help"])
+        self.assertEqual(plan.actions[0].name, "show_help")
+        self.assertEqual(len(plan.actions), 1)
+        self.assertEqual(plan.actions[0].name, "show_help")
     def test_unknown_intent(self):
         analysis, plan = self.ai.process_input(
             self.create_input("algo desconocido")
@@ -150,5 +154,27 @@ class TestAICore(unittest.TestCase):
             min_score=0.8,
         )
         self.assertEqual(result, "Usuario: Python memoria local")
+    def test_process_input_returns_analysis_batch(self):
+        data = InputData(
+            text=(
+                "Recuerda proyecto: JARVIS "
+                "y recuerda lenguaje: Python"
+            ),
+            timestamp=datetime.now(),
+            source="user",
+        )
+        analysis, plan = self.ai.process_input(data)
+        self.assertIsInstance(analysis, AnalysisBatch)
+        self.assertEqual(len(analysis.results), 2)
+        self.assertEqual(len(plan.actions), 2)
+    def test_process_input_preserves_single_analysis(self):
+        data = InputData(
+            text="Recuerda proyecto: JARVIS",
+            timestamp=datetime.now(),
+            source="user",
+        )
+        analysis, plan = self.ai.process_input(data)
+        self.assertIsInstance(analysis, AnalysisResult)
+        self.assertEqual(len(plan.actions), 1)
 if __name__ == "__main__":
     unittest.main()

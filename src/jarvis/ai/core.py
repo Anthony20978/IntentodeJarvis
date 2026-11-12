@@ -7,6 +7,7 @@ from .structures import (
     AnalysisResult,
     ExecutionResult,
     InputData,
+    AnalysisBatch
 )
 from .understanding import analyze_input
 class AICore:
@@ -23,9 +24,13 @@ class AICore:
     def process_input(
         self,
         data: InputData,
-    ) -> tuple[AnalysisResult, ActionPlan]:
-        """Analiza una entrada utilizando el contexto disponible."""
-        analysis = analyze_input(data, context=self._context)
+    ) -> tuple[AnalysisResult | AnalysisBatch, ActionPlan]:
+        """Analiza una entrada y genera un plan de acciones."""
+        analysis = analyze_input(
+            data,
+            context=self._context,
+            available_integrations=self._handlers,
+        )
         self._context.add_input(data)
         plan = create_action_plan(analysis)
         return analysis, plan

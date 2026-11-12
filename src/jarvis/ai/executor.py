@@ -1,12 +1,12 @@
 from collections.abc import Callable, Mapping
-from .structures import ActionPlan, ExecutionResult
+from .structures import Action, ActionPlan, ExecutionResult
 ActionHandler = Callable[[dict], str]
 def execute_action_plan(
     plan: ActionPlan,
     handlers: Mapping[str, ActionHandler],
     confirmed: bool = False,
 ) -> ExecutionResult:
-    """Valida y ejecuta las acciones de un plan autorizado."""
+    """Valida y ejecuta las acciones autorizadas de un plan."""
     if not isinstance(plan, ActionPlan):
         raise TypeError("Se esperaba un objeto ActionPlan.")
     if not isinstance(confirmed, bool):
@@ -19,23 +19,27 @@ def execute_action_plan(
     if plan.requires_confirmation and not confirmed:
         return ExecutionResult(
             success=False,
-            output="",
             error="La acción requiere confirmación.",
         )
     outputs = []
     for action in plan.actions:
-        handler = handlers.get(action)
+        if not isinstance(action, Action):
+            return ExecutionResult(
+                success=False,
+                error="El plan contiene una acción inválida.",
+            )
+        handler = handlers.get(action.name)
         if handler is None:
             return ExecutionResult(
                 success=False,
-                error=f"Acción no disponible: {action}.",
+                error=f"Acción no disponible: {action.name}.",
             )
         try:
-            output = handler(dict(plan.parameters))
+            output = handler(dict(action.parameters))
         except Exception as error:
             return ExecutionResult(
                 success=False,
-                error=f"Error al ejecutar {action}: {error}",
+                error=f"Error al ejecutar {action.name}: {error}",
             )
         outputs.append(str(output))
     return ExecutionResult(
