@@ -84,5 +84,16 @@ class JarvisCoreTests(unittest.TestCase):
         self.assertTrue(capabilities["system_detection"])
         self.assertTrue(capabilities["persistent_memory"])
         self.assertTrue(capabilities["command_processing"])
+    def test_remember_command(self):
+        response = process_command(
+            "recuerda nombre: JARVIS"
+        )
+        self.assertIn("PLAN DE EJECUCIÓN", response)
+        response = process_command("S")
+        self.assertIn("He guardado: nombre.", response)
+        self.assertEqual(
+            memory.get_memory("nombre"),
+            "JARVIS"
+        )
 if __name__ == "__main__":
     unittest.main()

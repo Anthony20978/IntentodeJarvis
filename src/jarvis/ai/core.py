@@ -24,8 +24,8 @@ class AICore:
         self,
         data: InputData,
     ) -> tuple[AnalysisResult, ActionPlan]:
-        """Analiza una entrada y genera su plan de acción."""
-        analysis = analyze_input(data)
+        """Analiza una entrada utilizando el contexto disponible."""
+        analysis = analyze_input(data, context=self._context)
         self._context.add_input(data)
         plan = create_action_plan(analysis)
         return analysis, plan
@@ -35,11 +35,7 @@ class AICore:
         confirmed: bool = False,
     ) -> ExecutionResult:
         """Ejecuta un plan mediante los manejadores registrados."""
-        return execute_action_plan(
-            plan,
-            self._handlers,
-            confirmed,
-        )
+        return execute_action_plan(plan, self._handlers, confirmed)
     def get_history(
         self,
         limit: int | None = None,
@@ -55,3 +51,27 @@ class AICore:
     def clear_history(self) -> None:
         """Limpia el historial."""
         self._context.clear()
+    def find_relevant_context(
+        self,
+        query: str,
+        limit: int = 5,
+        min_score: float = 0.3,
+    ) -> list[InputData]:
+        """Recupera entradas relevantes del historial."""
+        return self._context.find_relevant(
+            query,
+            limit=limit,
+            min_score=min_score,
+        )
+    def get_relevant_context(
+        self,
+        query: str,
+        limit: int = 5,
+        min_score: float = 0.3,
+    ) -> str:
+        """Recupera el contexto relevante en formato conversacional."""
+        return self._context.get_relevant_context(
+            query,
+            limit=limit,
+            min_score=min_score,
+        )

@@ -129,7 +129,7 @@ ESTRUCTURA Y DOCUMENTACIÓN DEL PROYECTO
 </g>
 
 <!-- PRUEBAS -->
-<text x="60" y="2110" class="section">04 — tests/</text>
+<text x="60" y="2110" class="section">04 — tests/   (Explicado con más detalle más adelante en el README)</text>
 <rect x="50" y="2135" width="1100" height="210" rx="10" class="panel"/>
 
 <g class="filename">

@@ -13,6 +13,19 @@ class AnalysisResult:
     entities: dict = field(default_factory=dict)
     confidence: float = 0.0
     understood: bool = False
+"""
+@dataclass
+class Action:
+    #Representa una acción individual de JARVIS
+    name: str
+    parameters: dict = field(default_factory=dict)
+@dataclass
+class ActionPlan:
+    #Representa un conjunto de acciones independientes.
+    actions: list[Action] = field(default_factory=list)
+    requires_confirmation: bool = True
+    reason: str = ""
+"""
 @dataclass
 class ActionPlan:
     """Representa las acciones que JARVIS pretende realizar."""

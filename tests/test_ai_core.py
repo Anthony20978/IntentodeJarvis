@@ -67,5 +67,88 @@ class TestAICore(unittest.TestCase):
     def test_invalid_plan(self):
         with self.assertRaises(TypeError):
             self.ai.execute_plan("invalid")
+    def test_find_relevant_context(self):
+        expected = self.create_input("Python local memory")
+        self.ai._context.add_input(expected)
+        result = self.ai.find_relevant_context("Python memory")
+        self.assertEqual(result, [expected])
+    def test_find_relevant_context_forwards_min_score(self):
+        strong = self.create_input("Python local memory")
+        weak = self.create_input("Python")
+        self.ai._context.add_input(strong)
+        self.ai._context.add_input(weak)
+        result = self.ai.find_relevant_context(
+            "Python local memory",
+            min_score=0.6,
+        )
+        self.assertEqual(result, [strong])
+    def test_get_relevant_context_returns_text(self):
+        self.ai._context.add_input(
+            InputData(
+                text="Python local memory",
+                timestamp=datetime(2026, 1, 1),
+                source="user",
+            )
+        )
+        result = self.ai.get_relevant_context("Python memory")
+        self.assertEqual(result, "Usuario: Python local memory")
+        self.assertIsInstance(result, str)
+    def test_get_relevant_context_forwards_min_score(self):
+        self.ai._context.add_input(
+            self.create_input("Python local memory")
+        )
+        self.ai._context.add_input(self.create_input("Python"))
+        result = self.ai.get_relevant_context(
+            "Python local memory",
+            min_score=0.6,
+        )
+        self.assertEqual(result, "Test: Python local memory")
+    def test_process_input_uses_conversation_context(self):
+        self.ai.process_input(
+            InputData(
+                text="Me interesa Python",
+                timestamp=datetime(2026, 1, 1),
+                source="user",
+            )
+        )
+        analysis, _ = self.ai.process_input(
+            InputData(
+                text="Háblame de Python",
+                timestamp=datetime(2026, 1, 1),
+                source="user",
+            )
+        )
+        self.assertIn(
+            "conversation_context",
+            analysis.entities,
+        )
+        self.assertIn(
+            "Me interesa Python",
+            analysis.entities["conversation_context"],
+        )
+    def test_get_relevant_context_returns_formatted_text(self):
+        self.ai.process_input(
+            InputData(
+                text="Me interesa Python",
+                timestamp=datetime(2026, 1, 1),
+                source="user",
+            )
+        )
+        result = self.ai.get_relevant_context("Python")
+        self.assertIsInstance(result, str)
+        self.assertEqual(result, "Usuario: Me interesa Python")
+    def test_get_relevant_context_respects_min_score(self):
+        self.ai.process_input(
+            InputData(
+                text="Python memoria local",
+                timestamp=datetime(2026, 1, 1),
+                source="user",
+            )
+        )
+        result = self.ai.get_relevant_context(
+            "Python memoria local",
+            min_score=0.8,
+        )
+        self.assertEqual(result, "Usuario: Python memoria local")
 if __name__ == "__main__":
     unittest.main()

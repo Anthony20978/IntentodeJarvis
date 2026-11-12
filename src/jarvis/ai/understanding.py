@@ -1,4 +1,5 @@
 import re
+from collections.abc import Mapping
 from .language import normalize_text
 from .structures import InputData, AnalysisResult
 HELP_PHRASES = {
@@ -18,12 +19,43 @@ EXIT_PHRASES = {
     "adios",
     "adiós",
 }
-def analyze_input(data: InputData) -> AnalysisResult:
+def _format_relevant_context(context, query: str) -> str:
+    """Recupera y formatea el contexto relacionado con una consulta."""
+    if not callable(getattr(context, "find_relevant", None)):
+        raise TypeError(
+            "context debe proporcionar find_relevant()."
+        )
+    relevant = context.find_relevant(
+        query,
+        limit=5,
+        min_score=0.3,
+    )
+    lines = []
+    for data in relevant:
+        source = data.source.lower()
+        if source == "user":
+            label = "Usuario"
+        elif source in ("assistant", "jarvis"):
+            label = "JARVIS"
+        else:
+            label = data.source.capitalize()
+        lines.append(f"{label}: {data.text}")
+    return "\n".join(lines)
+def analyze_input(
+    data: InputData,
+    context=None,
+    available_integrations: Mapping[str, object] | None = None,
+) -> AnalysisResult:
     """Analiza una entrada e identifica su intención."""
     if not isinstance(data, InputData):
         raise TypeError("Se esperaba un objeto InputData.")
     original_text = data.text.strip()
     normalized_text = normalize_text(original_text)
+    if (
+        available_integrations is not None
+        and not isinstance(available_integrations, Mapping)
+    ):
+        raise TypeError("available_integrations debe ser un Mapping.")
     if not normalized_text:
         return AnalysisResult(
             intent="unknown",
@@ -41,6 +73,25 @@ def analyze_input(data: InputData) -> AnalysisResult:
             confidence=1.0,
             understood=True,
         )
+    integration_match = re.fullmatch(
+        r"(?:ejecuta|execute)\s+(.+)",
+        normalized_text,
+    )
+    if integration_match and available_integrations is not None:
+        requested_name = integration_match.group(1).strip()
+        registered_names = {
+            name.strip().lower(): name
+            for name in available_integrations
+            if isinstance(name, str) and name.strip()
+        }
+        integration_name = registered_names.get(requested_name)
+        if integration_name is not None:
+            return AnalysisResult(
+                intent="integration",
+                entities={"integration": integration_name},
+                confidence=1.0,
+                understood=True,
+            )
     remember_match = re.fullmatch(
         r"recuerda\s+(.+?)\s*:\s*(.+)",
         original_text,
@@ -75,8 +126,17 @@ def analyze_input(data: InputData) -> AnalysisResult:
                 confidence=1.0,
                 understood=True,
             )
+    entities = {}
+    if context is not None:
+        relevant_context = _format_relevant_context(
+            context,
+            original_text,
+        )
+        if relevant_context:
+            entities["conversation_context"] = relevant_context
     return AnalysisResult(
         intent="unknown",
+        entities=entities,
         confidence=0.0,
         understood=False,
     )

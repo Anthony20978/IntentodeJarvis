@@ -5,10 +5,16 @@
 JARVIS es un proyecto de asistente personal desarrollado principalmente en Python. Su objetivo es construir progresivamente una inteligencia artificial propia, capaz de comprender instrucciones, analizar información, aprender y ejecutar tareas mediante sus capacidades internas.
 
 Uno de los objetivos del proyecto es permitir que el usuario pueda crear, entrenar, administrar y ejecutar redes neuronales sencillas mediante instrucciones de diálogo.
+Se busca que jarvis sea capaz de pensar, mantener conversaciones, programar herramientas externas, con confirmación, mejorarse con una herramienta que el mismo programe a partir de lenguaje natural, o gestionar varias redes neuronales.
+
+Se debe instalar con el
+```powershell
+python -m pip install -e .
+```
 
 ## Versión
 
-`v0.3.0`
+`v0.3.1`
 
 ## Estado del proyecto
 
@@ -51,10 +57,14 @@ Se utilizan `dataclasses` de Python para establecer formatos estandarizados de c
 - `confidence`: nivel de confianza estimado (`float`).
 - `understood`: indica si la instrucción fue comprendida (`bool`).
 
+### `Action` — Acción individual
+
+- `name`: Nombre de la accion (`list[Action]`).
+- `parameters`: Parametros necesarios para la acción. (`bool`).
+
 ### `ActionPlan` — Plan de acción
 
-- `actions`: acciones propuestas (`list`).
-- `parameters`: parámetros necesarios para las acciones (`dict`).
+- `actions`: acciones propuestas (`list[Action]`).
 - `requires_confirmation`: indica si se necesita autorización (`bool`).
 - `reason`: justificación del plan (`str`).
 
@@ -345,6 +355,7 @@ test_jarvis
 | `test_help_command` | Mostrar la ayuda de JARVIS. |
 | `test_system_detection` | Detectar el sistema operativo. |
 | `test_capabilities` | Verificar las capacidades detectadas del sistema. |
+|`test_remember_command`|Hace una prueba con el comando probar.|
 
 #### `test_neural.py` — 8 pruebas
 
@@ -372,7 +383,7 @@ test_jarvis
 | `test_invalid_plan` | Rechazo de planes que no sean objetos `ActionPlan`. |
 | `test_invalid_confirmation` | Rechazo de valores de confirmación incorrectos. |
 
-#### `test_reasoning.py` — 5 pruebas
+#### `test_reasoning.py` — 11 pruebas
 
 | Nombre de la prueba | Qué verifica |
 |---|---|
@@ -381,6 +392,15 @@ test_jarvis
 | `test_unknown_plan` | Manejo de intenciones desconocidas. |
 | `test_default_confirmation` | Verifica que las acciones requieran confirmación por defecto. |
 | `test_invalid_input` | Rechazo de entradas que no sean objetos `AnalysisResult`. |
+|`test_unknown_plan_preserves_context`|Revisa si conserva el contexto.|
+|`test_low_confidence_does_not_propose_action`|revisa que poca confianza no proponga una acción.|
+|`test_confidence_at_threshold_allows_action`|Revisa que con la confianza suficiente se reallize la acción.|
+|`test_custom_minimum_confidence`|Revisa que se pueda modificar la confianza minima.|
+|`test_invalid_minimum_confidence`|Prueba el rechazo ante una confianza invalida.|
+|`test_invalid_analysis_confidence`|Prueba el rechazo ante una confianza invalida (en el analisis).|
+|`test_integration_plan_uses_requested_handler`|Prueba que el diseño del plan tome en cuenta los comandos.|
+|`test_integration_plan_rejects_missing_name`|Prueba que un comando sin nombre no se ejecute.|
+|`test_integration_plan_rejects_invalid_name`|Prueba que un comando sin un nombre valido no se ejecute.|
 
 #### `test_config.py` — 5 pruebas
 
@@ -415,7 +435,7 @@ test_jarvis
 | `test_tokenize_unicode` | Comprueba la separación de texto Unicode y puntuación. |
 | `test_tokenize_empty_text` | Comprueba el procesamiento de entradas vacías. |
 
-### `test_understanding.py` — 12 pruebas
+### `test_understanding.py` — 20 pruebas <sub>Archivo con más pruebas</sub>
 
 | Prueba | Descripción |
 |---|---|
@@ -431,6 +451,19 @@ test_jarvis
 | `test_remember_empty_key` | Rechaza solicitudes sin clave. |
 | `test_remember_empty_value` | Rechaza solicitudes sin valor. |
 | `test_recall_empty_key` | Rechaza solicitudes de recuperación sin clave. |
+|`test_context_parameter_is_optional`|Verifica que el parametro de contexto del entendimiento de jarvis sigue siendo opcional.|
+|`test_context_is_used_for_unknown_intent`|Prueba que el contexto sea utilizado.|
+|`test_relevant_context_is_added_to_entities`|Comprueba que el contexto se agrega a entities.|
+|`test_empty_context_does_not_add_entity`|Se fija en si al dar contexto vacio, sigue añadiendose a entities.|
+|`test_context_is_not_used_for_known_intents`|Se fija en que si las intenciones de inicio está en blanco, no se llame el contexto.|
+|`test_context_is_not_used_for_empty_input`|Se fija en que si la entrada está en blanco, no se llame al contexto.|
+|`test_invalid_context`|Se observa el comportamiento, cuando el contexto tiene un error.|
+|`test_context_preserves_original_command_behavior`|Se fija en que el contexto no afecte el desarrollo de otras entidades.|
+| `test_registered_integration_intent` | Reconocer una orden que solicita ejecutar una integración registrada. |
+| `test_registered_integration_is_case_insensitive` | Reconocer nombres de integraciones sin distinguir mayúsculas y minúsculas. |
+| `test_unknown_integration_is_not_recognized` | Rechazar integraciones que no existen en el registro. |
+| `test_integration_command_requires_registry` | Evitar reconocer integraciones cuando no se proporciona un registro. |
+| `test_invalid_available_integrations` | Rechazar registros de integraciones con tipos inválidos. |
 
 #### `test_learning.py` — 8 pruebas
 
@@ -445,7 +478,7 @@ test_jarvis
 | `test_invalid_dimensions` | Rechazo de entradas y objetivos con dimensiones incorrectas. |
 | `test_non_finite_values` | Rechazo de datos con valores infinitos. |
 
-### `test_ai_core.py` — 10 pruebas
+### `test_ai_core.py` — 17 pruebas
 
 | Prueba | Descripción |
 |---|---|
@@ -459,19 +492,79 @@ test_jarvis
 | `test_invalid_input` | Verifica el rechazo de entradas incorrectas. |
 | `test_invalid_handlers` | Comprueba la validación de los manejadores. |
 | `test_invalid_plan` | Verifica el rechazo de planes incorrectos. |
+|`test_find_relevant_context`|Verifica que la funcion `find_relevant_context()` se pueda llamar desde el nucleo.|
+|`test_find_relevant_context_forwards_min_score`|Verifica que el contexto obedezca la puntucación minima.|
+|`test_get_relevant_context_returns_text`|Verifica que se pueda llamar la creación de texto conversacional.|
+|`test_get_relevant_context_forwards_min_score`|Verifica que la creación de texto conversacional obedezca la puntuacion minima.|
+|`test_process_input_uses_conversation_context`|Revisa si el nucleo usa el contexto para analizar la entrada.|
+|`test_get_relevant_context_returns_formatted_text`|Revisa que el nucleo sea capaz de obtener texto conversacional.|
+|`test_get_relevant_context_respects_min_score`|Revisa que el contexto respete la puntuacion minima.|
 
-#### `test_context.py` — 6 pruebas
+#### `test_context.py` — 15 pruebas
 
 | Nombre de la prueba | Qué verifica |
-|---|---|
+|------|--------|
 | `test_add_input` | Añadir entradas al historial de conversación. |
 | `test_get_recent` | Recuperar las entradas más recientes. |
 | `test_max_history` | Respetar el límite máximo del historial. |
 | `test_clear` | Limpiar el historial de conversación. |
 | `test_invalid_input` | Rechazar entradas que no sean objetos `InputData`. |
 | `test_invalid_history_limit` | Rechazar límites de historial inválidos. |
+|`test_find_relevant_matches_case_insensitively`|Verifica que la funcioón `Find_relevant()` solo devuelva textos que sean relevantes.|
+|`test_find_relevant_respects_min_score`|Verifica que solo se devuelvan los textos que cumplan la puntuacion minima|
+|`test_find_relevant_respects_limit`|Verifica que al buscar los relevantes se respete el limite de mensajes fijado, configurable.|
+|`test_find_relevant_empty_or_unmatched_query`|Verifica que cuando el texto esté vacío no devuelva nada.|
+|`test_find_relevant_invalid_query`|Revisa que sin un texto, levante un `TypeError`.|
+|`test_find_relevant_invalid_min_score_type`|Revisa que se levante un `TypeError` al insertar una puntuacion minima invalida.|
+|`test_find_relevant_invalid_min_score_range`|Revisa que un valor negativo o superior a uno levanten un `ValueError`. |
+|`test_get_relevant_context_formats_results`|Revisa que la función pueda convertir el contexto a texto conversacional.|
+|`test_get_relevant_context_respects_min_score`|Revisa que funcione la generacion de texto conversacional a partir de un texto y la busqueda de historial relevante.|
 
-**Total: 86 pruebas automatizadas documentadas.**
+#### `test_integrations.py` — 11 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_register_and_get_handler` | Comprobar que una integración se registra y puede recuperarse. |
+| `test_register_rejects_empty_name` | Evitar registrar integraciones con nombres vacíos. |
+| `test_register_rejects_non_callable` | Impedir registrar objetos que no sean funciones ejecutables. |
+| `test_register_rejects_duplicate_without_replace` | Evitar sobrescribir integraciones existentes accidentalmente. |
+| `test_register_can_replace_handler` | Comprobar que se puede reemplazar una integración explícitamente. |
+| `test_unregister_existing_handler` | Verificar que una integración existente puede eliminarse. |
+| `test_unregister_missing_handler` | Comprobar que eliminar una integración inexistente devuelve `False`. |
+| `test_get_handlers_returns_copy` | Verificar que obtener las integraciones no permite modificar el registro original. |
+| `test_invalid_initial_handlers` | Rechazar valores inválidos al inicializar el registro. |
+| `test_invalid_replace_flag` | Rechazar valores no booleanos en el parámetro `replace`. |
+| `test_length` | Comprobar que se devuelve la cantidad correcta de integraciones registradas. |
+
+#### `test_brain_integrations.py` — 9 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_register_integration` | Comprobar que una nueva integración se registra correctamente. |
+| `test_registered_integration_can_be_executed` | Verificar que JARVIS puede ejecutar una integración registrada. |
+| `test_duplicate_integration_is_rejected` | Evitar registrar integraciones duplicadas accidentalmente. |
+| `test_integration_can_be_replaced` | Comprobar que una integración puede reemplazarse explícitamente. |
+| `test_unregister_integration` | Verificar que una integración existente puede eliminarse. |
+| `test_unregister_missing_integration` | Comprobar que eliminar una integración inexistente devuelve `False`. |
+| `test_invalid_integration_name` | Rechazar nombres de integración vacíos. |
+| `test_invalid_integration_handler` | Rechazar manejadores que no sean funciones ejecutables. |
+| `test_get_integrations_returns_copy` | Evitar que modificar la copia de integraciones altere el registro original. |
+
+**#### `test_brain_confirmation.py` — 9 pruebas**
+
+| Nombre de la prueba | Descripción |
+|---|---|
+| `test_plan_is_shown_before_execution` | El plan se presenta antes de ejecutarse. |
+| `test_s_authorizes_only_one_action` | S autoriza solamente una acción. |
+| `test_o_authorizes_all_remaining_actions` | O autoriza todas las acciones restantes. |
+| `test_o_authorizes_all_actions_from_the_beginning` | O autoriza todas las acciones desde el inicio. |
+| `test_n_cancels_remaining_actions` | N cancela las acciones pendientes. |
+| `test_invalid_answer_keeps_plan_pending` | Una respuesta inválida mantiene el plan pendiente. |
+| `test_new_instruction_is_not_processed_while_plan_is_pending` | Impide procesar instrucciones nuevas durante la confirmación. |
+| `test_s_without_pending_plan_does_not_execute_actions` | Impide ejecutar acciones sin un plan pendiente. |
+| `test_execution_failure_clears_pending_plan` | Limpia el plan cuando ocurre un error de ejecución. |
+
+**Total: 153 pruebas automatizadas documentadas.**
 
 Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 
