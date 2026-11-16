@@ -14,7 +14,7 @@ python -m pip install -e .
 
 ## Versión
 
-`v0.3.2`
+`v0.3.3`
 
 ## Estado del proyecto
 
@@ -28,6 +28,30 @@ El motor neuronal implementa una red multicapa básica con inferencia y entrenam
 
 La estructura de almacenamiento permite mantener los datos independientes de la ubicación del proyecto. Se contempla compatibilidad con Windows, Linux y macOS.
 Estamos implementando la posibilidad de reconocer más de una accion en un solo comando.
+Jarvis cuenta con la capacidad de integrar funciones nuevas a su sistema, que sirve como plugins.
+
+## Integraciones
+
+La integraciones sirven como plugins, que se pueden incorporar fácilmente dentro de la carpeta integrations, Jarvis las separa en 2 grupos
+
+### Integraciones elementales
+
+Son las que se implementan dentro del codigo fuente de Jarvis, están planeadas para ser solamente el siguiente grupo:
+
+- Recuerda: Guarda un dato, utiliza una clave y el dato
+- Recupera: Utiliza la clave para guardar el dato
+- help: Da la lista de integraciones elementales
+- save_plan: Se hace dando el comando G en la confirmación del plan, pide un nombre para el guardado
+- edit_plan: Toma el nombre del plan y deja editar parametros a voluntad
+- delete_plan: Toma el nombre del plan y lo borra de la memoria
+- execute_plan: executa un plan que está guardado.
+- ver planes: Muestra los planes guardados
+- see_integrations: Muestra las integraciones secundarias y sus datos
+- salir: Cierra a Jarvis.
+
+### Integraciones secundarias
+
+Son implementables en la carpeta integrations, están planeados para ser faciles de modificar y agregar, la forma de implementarles en el readme de la carpeta integrations.
 
 ## Memoria persistente
 
@@ -39,7 +63,17 @@ La memoria inicial utiliza SQLite para almacenar información mediante una tabla
 | Key | TEXT UNIQUE | Clave utilizada para identificar un dato. |
 | Value | TEXT | Información almacenada como texto. |
 
-Esta estructura constituye una implementación inicial. Podrá ampliarse conforme evolucionen las necesidades de memoria de JARVIS.
+| Campo | Tipo | Uso |
+|---|---|---|
+| id | INTEGER AUTOINCREMENT | Identificador único y orden de los registros. |
+| name | TEXT UNIQUE | Nombre utilizado para identificar el plan. |
+| actions | TEXT | Acciones del plan codificadas en formato JSON. |
+| parameters | TEXT | Parámetros necesarios para ejecutar las acciones. |
+| requires_confirmation | INTEGER | Indica si el plan requiere confirmación (0 o 1). |
+| created_at | TEXT | Fecha y hora de creación del plan. |
+| updated_at | TEXT | Fecha y hora de la última actualización. |
+
+> Esta estructura constituye una implementación inicial. Podrá ampliarse conforme evolucionen las necesidades de memoria de JARVIS.
 
 ## Estructuras de comunicación
 
@@ -79,6 +113,21 @@ Se utilizan `dataclasses` de Python para establecer formatos estandarizados de c
 - `success`: indica si la ejecución fue exitosa (`bool`).
 - `output`: resultado obtenido (`str`).
 - `error`: información del error, si existe (`str | None`).
+
+### `IntegrationParameter` — Parámetro de una integración
+
+- `name`: nombre del parámetro (`str`).
+- `description`: descripción de la función del parámetro (`str`).
+- `type`: tipo de dato esperado (`type`).
+- `required`: indica si el parámetro es obligatorio (`bool`).
+
+### `IntegrationDefinition` — Definición de una integración
+
+- `name`: nombre de la acción que ejecuta la integración (`str`).
+- `description`: descripción de la funcionalidad de la integración (`str`).
+- `version`: versión de la integración (`str`).
+- `parameters`: lista de parámetros que necesita la integración (`list[IntegrationParameter]`).
+- `handler`: función encargada de ejecutar la acción (`Callable[[dict], str]`).
 
 Estas estructuras permiten mantener una comunicación consistente, facilitar las pruebas y reducir las dependencias entre componentes.
 
@@ -338,7 +387,7 @@ El proyecto utiliza la biblioteca `unittest` de Python para realizar pruebas aut
 Para ejecutar todas las pruebas desde la raíz del proyecto, utiliza el siguiente comando en PowerShell:
 
 ```powershell
-python -m unittest discover -s tests -v
+python -m unittest discover -s . -v
 ```
 o bien el atajo de jarvis
 ```powershell
@@ -489,7 +538,7 @@ test_jarvis
 | `test_invalid_dimensions` | Rechazo de entradas y objetivos con dimensiones incorrectas. |
 | `test_non_finite_values` | Rechazo de datos con valores infinitos. |
 
-#### `test_ai_core.py` — 19 pruebas
+#### `test_ai_core.py` — 21 pruebas
 
 | Prueba | Descripción |
 |---|---|
@@ -512,6 +561,8 @@ test_jarvis
 |`test_get_relevant_context_respects_min_score`|Revisa que el contexto respete la puntuacion minima.|
 |`test_process_input_returns_analysis_batch`|Revisa que al procesar se regrese un analysisbatch.|
 |`test_process_input_preserves_single_analysis`|Revisa que el analisis batch contenga objetos del tipo analisys.|
+|`test_process_multiple_instructions`|Prueba la creación de mas de una accion por comando.|
+|`test_process_batch_skips_unknown_instructions`|Revisa que las instrucciones invalidas se ignoren.|
 
 #### `test_context.py` — 15 pruebas
 
@@ -533,7 +584,7 @@ test_jarvis
 |`test_get_relevant_context_formats_results`|Revisa que la función pueda convertir el contexto a texto conversacional.|
 |`test_get_relevant_context_respects_min_score`|Revisa que funcione la generacion de texto conversacional a partir de un texto y la busqueda de historial relevante.|
 
-#### `test_integrations.py` — 11 pruebas
+#### `test_integrations.py` — 17 pruebas
 
 | Nombre de la prueba | Qué verifica |
 |---|---|
@@ -548,6 +599,12 @@ test_jarvis
 | `test_invalid_initial_handlers` | Rechazar valores inválidos al inicializar el registro. |
 | `test_invalid_replace_flag` | Rechazar valores no booleanos en el parámetro `replace`. |
 | `test_length` | Comprobar que se devuelve la cantidad correcta de integraciones registradas. |
+| `test_register_definition` | Registra una definición con sus metadatos y handler. |
+| `test_register_definition_rejects_invalid_type` | Rechaza valores que no sean IntegrationDefinition. |
+| `test_get_definition` | Recupera los metadatos de una integración por su nombre. |
+| `test_get_definitions_returns_copy` | Comprueba que get_definitions devuelve una copia independiente. |
+| `test_unregister_removes_definition` | Elimina también los metadatos al eliminar una integración. |
+| `test_get_discovery_errors_returns_copy` | Comprueba que get_discovery_errors devuelve una copia independiente. |
 
 #### `test_brain_integrations.py` — 9 pruebas
 
@@ -563,7 +620,7 @@ test_jarvis
 | `test_invalid_integration_handler` | Rechazar manejadores que no sean funciones ejecutables. |
 | `test_get_integrations_returns_copy` | Evitar que modificar la copia de integraciones altere el registro original. |
 
-#### `test_brain_confirmation.py` — 4 pruebas
+#### `test_brain_confirmation.py` — 9 pruebas
 
 | Nombre de la prueba | Descripción |
 |---|---|
@@ -571,6 +628,11 @@ test_jarvis
 | `test_action_has_empty_parameters_by_default` | Prueba que por defecto los parametros estén vacion. |
 | `test_actions_have_independent_parameters` | Verifica que las acciones tengan parametros independientes. |
 | `test_action_plan_stores_multiple_actions` | Verifica que un plan pueda contener más de una acción. |
+| `test_analysis_batch_supports_multiple_actions` | Verifica que analisis pueda contener mas de una acción. |
+| `test_batch_with_unknown_and_recognized_instructions` | Prueba la reaccion ante acciones vacias o desconocidas. |
+| `test_batch_without_understood_instructions` | Prueba la reacción ante acciones que no se entendieron. |
+| `test_batch_of_safe_intents_does_not_require_confirmation` | Prueba que las acciones seguras no pidan confirmación. |
+| `test_batch_with_remember_and_recall_requires_confirmation` | Prueba las acciones recordar y recuperar. |
 
 #### `test_structures.py` — 13 pruebas
 
@@ -590,7 +652,58 @@ test_jarvis
 |`test_analysis_batch_rejects_non_list`|Revisa que no acepte analisis sin lista.|
 |`test_analysis_batch_rejects_invalid_results`|Revisa que rechaze resultados invalidos.|
 
-**Total: 167 pruebas automatizadas documentadas.**
+**#### `test_plan_store.py` — 15 pruebas**
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_save_and_get_plan` | Comprobar que un plan se guarda y recupera correctamente. |
+| `test_plan_persists_after_reopening_database` | Verificar que los planes permanecen guardados al reabrir la base de datos. |
+| `test_list_plans` | Comprobar que se listan los planes guardados en orden alfabético con sus metadatos. |
+| `test_get_missing_plan` | Verificar que recuperar un plan inexistente devuelve `None`. |
+| `test_save_duplicate_plan` | Evitar guardar dos planes con el mismo nombre. |
+| `test_update_existing_plan` | Comprobar que se actualizan correctamente los datos de un plan existente. |
+| `test_update_missing_plan` | Verificar que actualizar un plan inexistente devuelve `False`. |
+| `test_delete_existing_plan` | Comprobar que un plan existente se elimina correctamente. |
+| `test_delete_missing_plan` | Verificar que eliminar un plan inexistente devuelve `False`. |
+| `test_reject_empty_plan_name` | Evitar guardar planes con nombres vacíos. |
+| `test_reject_non_string_plan_name` | Rechazar nombres de plan que no sean texto. |
+| `test_reject_invalid_plan_type` | Rechazar objetos que no sean instancias de `ActionPlan`. |
+| `test_reject_invalid_actions` | Rechazar planes que contengan elementos que no sean instancias de `Action`. |
+| `test_reject_non_serializable_parameters` | Rechazar parámetros que no puedan convertirse a JSON. |
+| `test_operations_after_closing_connection` | Verificar que operar con la conexión cerrada produce un `RuntimeError`. |
+
+**#### `test_brain_plans.py` — 12 pruebas**
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_list_empty_plans` | Comprobar que JARVIS informa cuando no existen planes guardados. |
+| `test_list_saved_plans` | Verificar que se muestran los planes almacenados y sus descripciones. |
+| `test_save_pending_plan` | Comprobar que se guarda correctamente el plan pendiente mediante `G`. |
+| `test_edit_plan_parameter` | Verificar que se puede modificar un parámetro de un plan guardado. |
+| `test_edit_invalid_parameter` | Rechazar la modificación de un parámetro inexistente. |
+| `test_edit_missing_plan` | Informar cuando se intenta editar un plan inexistente. |
+| `test_delete_existing_plan` | Comprobar que se elimina correctamente un plan guardado. |
+| `test_delete_missing_plan` | Informar cuando se intenta eliminar un plan inexistente. |
+| `test_execute_plan_requires_confirmation` | Verificar que recuperar un plan no lo ejecuta sin autorización. |
+| `test_execute_plan_one_action_at_a_time` | Comprobar que se ejecutan las acciones individualmente mediante confirmación. |
+| `test_cancel_pending_plan_execution` | Verificar que cancelar impide ejecutar las acciones pendientes. |
+| `test_invalid_confirmation_does_not_execute_plan` | Comprobar que una respuesta inválida no autoriza la ejecución. |
+
+#### `test_integration_parameters.py` — 9 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_flags_extract_values_and_convert_types` | Extraer valores mediante banderas y convertirlos a los tipos definidos en la integración. |
+| `test_required_parameter_is_reported_as_missing` | Detectar parámetros obligatorios ausentes y evitar generar planes incompletos. |
+| `test_unknown_flag_is_reported` | Detectar y reportar banderas no definidas en la integración. |
+| `test_invalid_typed_value_is_reported` | Reportar errores cuando un valor no puede convertirse al tipo esperado. |
+| `test_core_passes_integration_definitions_to_understanding` | Comprobar que el núcleo transmite las definiciones de las integraciones al módulo de comprensión. |
+| `test_reasoning_does_not_create_action_with_missing_parameters` | Evitar que el razonamiento genere acciones cuando faltan parámetros obligatorios. |
+| `test_brain_prompts_for_missing_parameter_then_confirmation` | Verificar que JARVIS solicita los parámetros faltantes, presenta el plan y espera confirmación antes de ejecutarlo. |
+| `test_brain_accepts_flags_without_prompting` | Comprobar que JARVIS acepta parámetros proporcionados mediante banderas sin solicitarlos nuevamente. |
+| `test_brain_can_cancel_parameter_collection` | Verificar que el usuario puede cancelar la recopilación de parámetros pendientes. |
+
+**Total: 216 (+ Las pruebas de integraciones (4 para un total de 211)) pruebas automatizadas documentadas.**
 
 Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 
@@ -599,3 +712,7 @@ Las pruebas permiten verificar el funcionamiento de los componentes, detectar er
 ---
 
 Proyecto iniciado con fines principalmente educativos, de investigación y desarrollo.
+
+---
+
+Feliz navidad y prospero año nuevo

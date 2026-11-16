@@ -5,6 +5,7 @@ from src.jarvis.ai.structures import (
     Action,
     ActionPlan,
     AnalysisResult,
+    AnalysisBatch,
     ExecutionResult,
 )
 class TestBrainConfirmation(unittest.TestCase):
@@ -13,9 +14,9 @@ class TestBrainConfirmation(unittest.TestCase):
         brain._PENDING_ACTION_INDEX = 0
         self.plan = ActionPlan(
             actions=[
-                Action(name="first"),
-                Action(name="second"),
-                Action(name="third"),
+                Action("first", {"value": "one"}),
+                Action("second", {"value": "two"}),
+                Action("third", {"value": "three"}),
             ],
             requires_confirmation=True,
             reason="Prueba de confirmación.",
@@ -33,13 +34,17 @@ class TestBrainConfirmation(unittest.TestCase):
         self.execute_patch = patch.object(
             brain._AI_CORE,
             "execute_plan",
-            side_effect=lambda plan, confirmed=False: ExecutionResult(
-                success=True,
-                output=f"Ejecutada: {plan.actions[0].name}",
-            ),
+            side_effect=self._execute_plan,
         )
         self.process_input = self.process_patch.start()
         self.execute_plan = self.execute_patch.start()
+    @staticmethod
+    def _execute_plan(plan, confirmed=False):
+        names = [action.name for action in plan.actions]
+        return ExecutionResult(
+            success=True,
+            output=f"Ejecutadas: {', '.join(names)}",
+        )
     def tearDown(self):
         self.process_patch.stop()
         self.execute_patch.stop()
@@ -54,11 +59,15 @@ class TestBrainConfirmation(unittest.TestCase):
     def test_s_authorizes_only_one_action(self):
         brain.process_command("instrucción")
         response = brain.process_command("S")
+        self.execute_plan.assert_called_once()
         executed_plan = self.execute_plan.call_args.args[0]
-        self.assertEqual(len(executed_plan.actions), 1)
         self.assertEqual(
-            executed_plan.actions[0].name,
-            "first",
+            [action.name for action in executed_plan.actions],
+            ["first"],
+        )
+        self.assertEqual(
+            executed_plan.actions[0].parameters,
+            {"value": "one"},
         )
         self.assertTrue(
             self.execute_plan.call_args.kwargs["confirmed"]
@@ -68,29 +77,38 @@ class TestBrainConfirmation(unittest.TestCase):
     def test_o_authorizes_all_remaining_actions(self):
         brain.process_command("instrucción")
         brain.process_command("S")
+        self.execute_plan.reset_mock()
         response = brain.process_command("O")
-        executed_actions = [
-            call.args[0].actions[0].name
-            for call in self.execute_plan.call_args_list
-        ]
+        self.execute_plan.assert_called_once()
+        executed_plan = self.execute_plan.call_args.args[0]
         self.assertEqual(
-            executed_actions,
-            ["first", "second", "third"],
+            [action.name for action in executed_plan.actions],
+            ["second", "third"],
+        )
+        self.assertEqual(
+            [action.parameters for action in executed_plan.actions],
+            [
+                {"value": "two"},
+                {"value": "three"},
+            ],
+        )
+        self.assertTrue(
+            self.execute_plan.call_args.kwargs["confirmed"]
         )
         self.assertIn("Todas las acciones se ejecutaron", response)
         self.assertIsNone(brain._PENDING_PLAN)
         self.assertEqual(brain._PENDING_ACTION_INDEX, 0)
     def test_o_authorizes_all_actions_from_the_beginning(self):
         brain.process_command("instrucción")
-        brain.process_command("O")
-        executed_actions = [
-            call.args[0].actions[0].name
-            for call in self.execute_plan.call_args_list
-        ]
+        response = brain.process_command("O")
+        self.execute_plan.assert_called_once()
+        executed_plan = self.execute_plan.call_args.args[0]
         self.assertEqual(
-            executed_actions,
+            [action.name for action in executed_plan.actions],
             ["first", "second", "third"],
         )
+        self.assertIn("Todas las acciones se ejecutaron", response)
+        self.assertIsNone(brain._PENDING_PLAN)
     def test_n_cancels_remaining_actions(self):
         brain.process_command("instrucción")
         response = brain.process_command("N")
@@ -136,5 +154,64 @@ class TestBrainConfirmation(unittest.TestCase):
         self.assertIn("Acción rechazada", response)
         self.assertIsNone(brain._PENDING_PLAN)
         self.assertEqual(brain._PENDING_ACTION_INDEX, 0)
+    def test_analysis_batch_supports_multiple_actions(self):
+        self.analysis = AnalysisBatch(results=[
+            AnalysisResult("integration", confidence=1.0, understood=True),
+            AnalysisResult("integration", confidence=1.0, understood=True),
+            AnalysisResult("integration", confidence=1.0, understood=True),
+        ])
+        self.process_input.return_value = (self.analysis, self.plan)
+        response = brain.process_command("tres instrucciones")
+        self.assertIn("PLAN DE EJECUCIÓN", response)
+        self.assertIs(brain._PENDING_PLAN, self.plan)
+        self.execute_plan.assert_not_called()
+    def test_batch_with_unknown_and_recognized_instructions(self):
+        self.analysis = AnalysisBatch(results=[
+            AnalysisResult("unknown", understood=False),
+            AnalysisResult("integration", confidence=1.0, understood=True),
+        ])
+        self.process_input.return_value = (self.analysis, self.plan)
+        response = brain.process_command("instrucciones combinadas")
+        self.assertIn("PLAN DE EJECUCIÓN", response)
+        self.assertIs(brain._PENDING_PLAN, self.plan)
+        self.execute_plan.assert_not_called()
+    def test_batch_without_understood_instructions(self):
+        self.analysis = AnalysisBatch(results=[
+            AnalysisResult("unknown", understood=False),
+            AnalysisResult("unknown", understood=False),
+        ])
+        self.process_input.return_value = (self.analysis, self.plan)
+        self.plan = ActionPlan(
+            actions=[],
+            requires_confirmation=False,
+            reason="No hay acciones válidas.",
+        )
+        self.process_input.return_value = (self.analysis, self.plan)
+        response = brain.process_command("instrucciones desconocidas")
+        self.assertIn("no tengo una función", response)
+        self.assertIsNone(brain._PENDING_PLAN)
+        self.execute_plan.assert_not_called()
+    def test_batch_of_safe_intents_does_not_require_confirmation(self):
+        self.analysis = AnalysisBatch(results=[
+            AnalysisResult("help", confidence=1.0, understood=True),
+            AnalysisResult("recall", confidence=1.0, understood=True),
+        ])
+        self.process_input.return_value = (self.analysis, self.plan)
+        response = brain.process_command("ayuda y recupera información")
+        self.execute_plan.assert_called_once()
+        self.assertFalse(
+            self.execute_plan.call_args.kwargs["confirmed"]
+        )
+        self.assertIsNone(brain._PENDING_PLAN)
+    def test_batch_with_remember_and_recall_requires_confirmation(self):
+        self.analysis = AnalysisBatch(results=[
+            AnalysisResult("recall", confidence=1.0, understood=True),
+            AnalysisResult("remember", confidence=1.0, understood=True),
+        ])
+        self.process_input.return_value = (self.analysis, self.plan)
+        response = brain.process_command("recupera y recuerda")
+        self.assertIn("PLAN DE EJECUCIÓN", response)
+        self.assertIs(brain._PENDING_PLAN, self.plan)
+        self.execute_plan.assert_not_called()
 if __name__ == "__main__":
     unittest.main()

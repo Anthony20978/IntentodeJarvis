@@ -5,7 +5,7 @@ from jarvis.ai.structures import (
     ActionPlan,
     AnalysisResult,
     InputData,
-    AnalysisBatch
+    AnalysisBatch,
 )
 class TestAICore(unittest.TestCase):
     def setUp(self):
@@ -176,5 +176,42 @@ class TestAICore(unittest.TestCase):
         analysis, plan = self.ai.process_input(data)
         self.assertIsInstance(analysis, AnalysisResult)
         self.assertEqual(len(plan.actions), 1)
+    def test_process_multiple_instructions(self):
+        analysis, plan = self.ai.process_input(
+            self.create_input(
+                "recuerda nombre: Anthony y recuerda ciudad: San José"
+            )
+        )
+        self.assertIsInstance(analysis, AnalysisBatch)
+        self.assertEqual(len(analysis.results), 2)
+        self.assertTrue(
+            all(result.understood for result in analysis.results)
+        )
+        self.assertEqual(
+            [action.name for action in plan.actions],
+            ["store_memory", "store_memory"],
+        )
+        self.assertEqual(
+            plan.actions[0].parameters,
+            {"key": "nombre", "value": "Anthony"},
+        )
+        self.assertEqual(
+            plan.actions[1].parameters,
+            {"key": "ciudad", "value": "San José"},
+        )
+    def test_process_batch_skips_unknown_instructions(self):
+        analysis, plan = self.ai.process_input(
+            self.create_input(
+                "recuerda nombre: Anthony y ejecuta herramienta_inexistente"
+            )
+        )
+        self.assertIsInstance(analysis, AnalysisBatch)
+        self.assertEqual(len(analysis.results), 2)
+        self.assertTrue(analysis.results[0].understood)
+        self.assertFalse(analysis.results[1].understood)
+        self.assertEqual(
+            [action.name for action in plan.actions],
+            ["store_memory"],
+        )
 if __name__ == "__main__":
     unittest.main()

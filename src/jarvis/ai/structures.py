@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
+from collections.abc import Callable
 @dataclass
 class InputData:
     """Representa la entrada recibida por JARVIS."""
@@ -45,3 +46,56 @@ class ExecutionResult:
     success: bool
     output: str = ""
     error: str | None = None
+@dataclass
+class IntegrationParameter:
+    """Describe un parámetro que necesita una integración."""
+    name: str
+    description: str
+    type: str
+    flag: str
+    required: bool = True
+    def __post_init__(self):
+        if not isinstance(self.flag, str) or not self.flag.strip():
+            raise ValueError("La bandera no puede estar vacía.")
+        if not self.flag.startswith("-"):
+            raise ValueError("La bandera debe comenzar con un guion.")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("El nombre del parámetro no puede estar vacío.")
+        if not isinstance(self.description, str):
+            raise TypeError("description debe ser texto.")
+        if not isinstance(self.type, type):
+            raise TypeError("type debe ser un tipo válido de Python.")
+        if not isinstance(self.required, bool):
+            raise TypeError("required debe ser un booleano.")
+@dataclass
+class IntegrationDefinition:
+    """Describe una acción ejecutable de una integración."""
+    name: str
+    description: str
+    version: str
+    parameters: list[IntegrationParameter] = field(default_factory=list)
+    handler: Callable[[dict], str] = field(default=None)
+    def __post_init__(self):
+        flags = [parameter.flag for parameter in self.parameters]
+        if len(flags) != len(set(flags)):
+            raise ValueError("No puede haber banderas duplicadas.")
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("El nombre de la integración no puede estar vacío.")
+        if not isinstance(self.description, str):
+            raise TypeError("description debe ser texto.")
+        if not isinstance(self.version, str) or not self.version.strip():
+            raise ValueError("La versión no puede estar vacía.")
+        if not isinstance(self.parameters, list):
+            raise TypeError("parameters debe ser una lista.")
+        if not all(
+            isinstance(parameter, IntegrationParameter)
+            for parameter in self.parameters
+        ):
+            raise TypeError(
+                "Todos los parámetros deben ser IntegrationParameter."
+            )
+        names = [parameter.name for parameter in self.parameters]
+        if len(names) != len(set(names)):
+            raise ValueError("No puede haber parámetros duplicados.")
+        if not callable(self.handler):
+            raise TypeError("handler debe ser una función ejecutable.")
