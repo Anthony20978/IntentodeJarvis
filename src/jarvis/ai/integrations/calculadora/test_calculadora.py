@@ -33,7 +33,7 @@ class TestCalculadoraIntegration(unittest.TestCase):
 class TestCalculadoraDefinition(unittest.TestCase):
     """Pruebas de los metadatos de la integración."""
     def test_integration_is_registered(self):
-        self.assertEqual(len(INTEGRATIONS), 1)
+        self.assertEqual(len(INTEGRATIONS), 2)
         self.assertEqual(INTEGRATIONS[0].name, "calculadora")
     def test_handler_is_calculate(self):
         self.assertIs(INTEGRATIONS[0].handler, calculate)

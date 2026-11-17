@@ -75,8 +75,11 @@ class IntegrationDefinition:
     version: str
     parameters: list[IntegrationParameter] = field(default_factory=list)
     handler: Callable[[dict], str] = field(default=None)
+    visible: bool = True
     def __post_init__(self):
         flags = [parameter.flag for parameter in self.parameters]
+        if not isinstance(self.visible,bool):
+            raise ValueError("Visible tiene que ser un booleano")
         if len(flags) != len(set(flags)):
             raise ValueError("No puede haber banderas duplicadas.")
         if not isinstance(self.name, str) or not self.name.strip():

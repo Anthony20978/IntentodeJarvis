@@ -1,5 +1,5 @@
 from jarvis.ai.structures import IntegrationDefinition, IntegrationParameter
-from .integration import calculate
+from .integration import calculate, calculate_ult
 parametro_expresion = IntegrationParameter(
     name="expresion",
     description="expresion que se va a calcular",
@@ -16,9 +16,18 @@ parametro_unidad = IntegrationParameter(
 )
 calcular_integracion = IntegrationDefinition(
     name= "calculadora",
-    description="Recibe una expresion matematica y calcula su resultado",
+    description="Recibe una expresion matematica y calcula su resultado (Versión con resultado directo)",
     version="1.0.0",
+    visible=False,
     parameters=[parametro_expresion, parametro_unidad],
     handler=calculate
 )
-INTEGRATIONS = [calcular_integracion]
+mostrar_integracion = IntegrationDefinition(
+    name= "calcular",
+    description="Recibe una expresion matematica y calcula su resultado (Versión con resultado en formato textual)",
+    version="1.0.0",
+    visible=True,
+    parameters=[parametro_expresion, parametro_unidad],
+    handler = calculate_ult
+)
+INTEGRATIONS = [calcular_integracion,mostrar_integracion]

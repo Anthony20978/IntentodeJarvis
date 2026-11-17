@@ -20,7 +20,8 @@ Se debe definir cada parametro como un IntegrationParameter
 #### Definir las integraciones
 
 Se deben definir las integraciones como un IntegrationDefinition
-
+Se recomienda hacer un duplicado de cada IntegrationDefinition, con la modificacion para lograr que una devuelva el resultado en formato de texto, y una integracion que devuelve el formato directo para Jarvis.
+Para esto se diseño la variable visible, que puede manejar cual comando se muestra al usuario, aunque ambos siguen siendo visibles para Jarvis, se planea que en un futuro con IA integrada pueda optar la versión directa. 
 #### Definir la lista de Integraciones
 
 Jarvis requiere una lista llamada INTEGRATIONS que debe tener todas las integraciones

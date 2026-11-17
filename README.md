@@ -128,6 +128,7 @@ Se utilizan `dataclasses` de Python para establecer formatos estandarizados de c
 - `version`: versión de la integración (`str`).
 - `parameters`: lista de parámetros que necesita la integración (`list[IntegrationParameter]`).
 - `handler`: función encargada de ejecutar la acción (`Callable[[dict], str]`).
+- `visible`: define si es visto por el comando see_integrations (`bool`) (sigue siendo ejecutable).
 
 Estas estructuras permiten mantener una comunicación consistente, facilitar las pruebas y reducir las dependencias entre componentes.
 

@@ -76,28 +76,29 @@ def _see_copy(parameters: dict) -> str:
     lines = ["Integraciones disponibles:"]
     for name in sorted(integrations):
         definition = _INTEGRATIONS.get_definition(name)
-        lines.append(f"\n- {name}")
-        if definition is None:
-            lines.append("  Sin metadatos disponibles.")
-            continue
-        lines.append(f"  Descripción: {definition.description}")
-        lines.append(f"  Versión: {definition.version}")
-        if definition.parameters:
-            lines.append("  Parámetros:")
-            for parameter in definition.parameters:
-                required = (
-                    "obligatorio"
-                    if parameter.required
-                    else "opcional"
-                )
-                lines.append(
-                    f"    - {parameter.name} "
-                    f"({parameter.type.__name__}, {required}): "
-                    f"{parameter.description}"
-                    f"Bandera: {parameter.flag}"
-                )
-        else:
-            lines.append("  Sin parámetros.")
+        if definition.visible:
+            lines.append(f"\n- {name}")
+            if definition is None:
+                lines.append("  Sin metadatos disponibles.")
+                continue
+            lines.append(f"  Descripción: {definition.description}")
+            lines.append(f"  Versión: {definition.version}")
+            if definition.parameters:
+                lines.append("  Parámetros:")
+                for parameter in definition.parameters:
+                    required = (
+                        "obligatorio"
+                        if parameter.required
+                        else "opcional"
+                    )
+                    lines.append(
+                        f"    - {parameter.name} "
+                        f"({parameter.type.__name__}, {required}): "
+                        f"{parameter.description}"
+                        f"Bandera: {parameter.flag}"
+                    )
+            else:
+                lines.append("  Sin parámetros.")
     return "\n".join(lines)
 # Registro central de las funciones que JARVIS puede ejecutar.
 _INTEGRATIONS = IntegrationRegistry({
