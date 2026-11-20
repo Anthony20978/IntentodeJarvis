@@ -190,5 +190,15 @@ class TestReasoning(unittest.TestCase):
         plan = create_action_plan(batch)
         self.assertEqual(len(plan.actions), 1)
         self.assertEqual(plan.actions[0].name, "store_memory")
+    def test_clear_creates_action(self):
+        analysis = AnalysisResult(
+            intent="clear",
+            confidence=1.0,
+            understood=True,
+        )
+        plan = create_action_plan(analysis)
+        self.assertEqual(len(plan.actions), 1)
+        self.assertEqual(plan.actions[0].name, "clear")
+        self.assertEqual(plan.actions[0].parameters, {})
 if __name__ == "__main__":
     unittest.main()

@@ -218,13 +218,27 @@ class TestUnderstanding(unittest.TestCase):
             result.results[1].entities["value"],
             "Python",
         )
-def test_analyze_single_instruction_returns_analysis_result(self):
-    data = InputData(
-        text="Recuerda proyecto: JARVIS",
-        timestamp=datetime.now(),
-        source="user",
-    )
-    result = analyze_input(data)
-    self.assertIsInstance(result, AnalysisResult)
+    def test_analyze_single_instruction_returns_analysis_result(self):
+        data = InputData(
+            text="Recuerda proyecto: JARVIS",
+            timestamp=datetime.now(),
+            source="user",
+        )
+        result = analyze_input(data)
+        self.assertIsInstance(result, AnalysisResult)
+    def test_clear_command(self):
+        phrases = [
+            "clear",
+            "limpia la terminal",
+            "limpiar la terminal",
+            "limpia la pantalla",
+            "limpiar pantalla",
+        ]
+        for phrase in phrases:
+            with self.subTest(phrase=phrase):
+                result = analyze_input(InputData(text=phrase))
+                self.assertEqual(result.intent, "clear")
+                self.assertTrue(result.understood)
+                self.assertEqual(result.confidence, 1.0)
 if __name__ == "__main__":
     unittest.main()

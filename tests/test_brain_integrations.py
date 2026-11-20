@@ -5,6 +5,9 @@ from src.jarvis.brain import (
     register_integration,
     unregister_integration,
 )
+from unittest.mock import patch
+from jarvis import brain
+from jarvis.ai.structures import AnalysisResult
 from src.jarvis.ai.structures import ActionPlan,Action
 class TestBrainIntegrations(unittest.TestCase):
     def setUp(self):
@@ -66,5 +69,22 @@ class TestBrainIntegrations(unittest.TestCase):
         integrations = get_integrations()
         integrations.clear()
         self.assertIn(self.name, get_integrations())
+class TestBrainClear(unittest.TestCase):
+    @patch("jarvis.brain.os.system")
+    def test_clear_clears_terminal(self, mock_system):
+        result = brain._clear()
+        mock_system.assert_called_once_with(
+            "cls" if brain.os.name == "nt" else "clear"
+        )
+        self.assertEqual(result, "Terminal limpiada.")
+    def test_clear_does_not_require_confirmation(self):
+        result = AnalysisResult(
+            intent="clear",
+            confidence=1.0,
+            understood=True,
+        )
+        self.assertFalse(
+            brain._requires_confirmation(result)
+        )
 if __name__ == "__main__":
     unittest.main()

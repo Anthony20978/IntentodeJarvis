@@ -9,7 +9,7 @@ def create_action_plan(analysis: AnalysisResult | AnalysisBatch, min_confidence:
         raise ValueError("La confianza mínima debe estar entre 0 y 1.")
     results = analysis.results if isinstance(analysis, AnalysisBatch) else [analysis]
     actions, global_parameters, reasons = [], {}, []
-    intent_actions = {"help": "show_help", "exit": "exit", "remember": "store_memory", "recall": "retrieve_memory"}
+    intent_actions = {"help": "show_help", "exit": "exit", "remember": "store_memory", "recall": "retrieve_memory","clear":"clear"}
     for result in results:
         if not isinstance(result, AnalysisResult):
             raise TypeError("Todos los resultados deben ser AnalysisResult.")
@@ -54,6 +54,7 @@ def create_action_plan(analysis: AnalysisResult | AnalysisBatch, min_confidence:
     return ActionPlan(
         actions=actions,
         parameters=global_parameters,
-        requires_confirmation=bool(actions),
+        requires_confirmation=any(
+            action.name != "clear" for action in actions),
         reason=" ".join(reasons) or "No se encontraron acciones válidas.",
     )

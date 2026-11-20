@@ -1,6 +1,8 @@
 from datetime import datetime, timezone
 from collections.abc import Callable
 from . import memory
+import os
+from .ai.background_tasks import BackgroundTaskManager
 from .ai.core import AICore
 from .ai.integrations_registry import IntegrationRegistry
 from .ai.structures import (
@@ -12,6 +14,105 @@ from .ai.structures import (
 )
 from .plan_store import PlanStore
 IntegrationHandler = Callable[[dict], str]
+def _begin_group_selection(start: int, stop: int) -> str:
+    """Solicita el grupo donde se ejecutarán las acciones autorizadas."""
+    global _PENDING_GROUP_SELECTION
+    groups = _BACKGROUND_TASKS.get_groups()
+    if not groups:
+        return "No hay grupos disponibles."
+    _PENDING_GROUP_SELECTION = {
+        "start": start,
+        "stop": stop,
+        "groups": groups,
+    }
+    lines = [
+        "¿A qué grupo deseas enviar las acciones?",
+        "Puedes responder con el número o el nombre del grupo.",
+        "",
+    ]
+    for index, group in enumerate(groups, start=1):
+        lines.append(
+            f"{index}. {group.name} "
+            f"({group.max_workers} trabajadores)"
+        )
+    return "\n".join(lines)
+def _handle_pending_group_selection(command: str) -> str:
+    """Resuelve la selección y envía las acciones al grupo."""
+    global _PENDING_GROUP_SELECTION
+    global _PENDING_PLAN, _PENDING_ACTION_INDEX
+    pending = _PENDING_GROUP_SELECTION
+    groups = pending["groups"]
+    selection = command.strip()
+    if selection.casefold() == "cancelar":
+        _PENDING_GROUP_SELECTION = None
+        _PENDING_PLAN = None
+        _PENDING_ACTION_INDEX = 0
+        return "Envío de acciones cancelado."
+    group = next(
+        (
+            item for item in groups
+            if item.name.casefold() == selection.casefold()
+            or item.id == selection
+        ),
+        None,
+    )
+    if group is None and selection.isdigit():
+        index = int(selection) - 1
+        if 0 <= index < len(groups):
+            group = groups[index]
+    if group is None:
+        return (
+            "Grupo no válido. Escribe su nombre, su número "
+            "o 'cancelar'."
+        )
+    plan = _PENDING_PLAN
+    start = pending["start"]
+    stop = pending["stop"]
+    submitted = []
+    try:
+        for index in range(start, stop):
+            action = plan.actions[index]
+            action_plan = ActionPlan(
+                actions=[action],
+                requires_confirmation=True,
+                reason=plan.reason,
+            )
+            def execute(plan=action_plan):
+                result = _AI_CORE.execute_plan(
+                    plan,
+                    confirmed=True,
+                )
+                if not result.success:
+                    raise RuntimeError(
+                        result.error or "Error de ejecución."
+                    )
+                return result.output
+            task_id = _BACKGROUND_TASKS.submit_task(
+                execute,
+                name=action.name,
+                group_id=group.id,
+            )
+            submitted.append(task_id)
+    except Exception as error:
+        _PENDING_GROUP_SELECTION = None
+        _PENDING_PLAN = None
+        _PENDING_ACTION_INDEX = 0
+        return (
+            f"No se pudieron enviar todas las acciones: {error}\n"
+            f"Acciones enviadas: {len(submitted)}"
+        )
+    _PENDING_GROUP_SELECTION = None
+    _PENDING_PLAN = None
+    _PENDING_ACTION_INDEX = 0
+    return (
+        f"{len(submitted)} acción(es) enviada(s) al grupo "
+        f"'{group.name}'.\n"
+        + "\n".join(f"ID de tarea: {task_id}" for task_id in submitted)
+    )
+def _clear(parameters: dict | None = None) -> str:
+    """Limpia la terminal."""
+    os.system("cls" if os.name == "nt" else "clear")
+    return "Terminal limpiada."
 def _save_memory(key: str, value: str) -> str:
     """Guarda información en la memoria persistente."""
     with memory.MemoryStore(memory.DATABASE_PATH) as store:
@@ -28,16 +129,26 @@ def _show_help(parameters: dict) -> str:
     """Devuelve los comandos disponibles."""
     return (
         "Comandos disponibles:\n"
-        "- recuerda clave: valor\n"
-        "- recupera clave\n"
-        "- ayuda\n"
-        "- salir\n"
-        "- ver integraciones\n"
-        "- ver planes\n"
-        "- editar_plan [nombre]\n"
-        "- eliminar_plan [nombre]\n"
-        "- ejecutar_plan [nombre]\n"
-        "- G o Guardar: guardar el plan pendiente"
+        "- recuerda clave: valor: Guarda información en la memoria.\n"
+        "- recupera clave: Recupera información de la memoria.\n"
+        "- ayuda: Muestra los comandos disponibles.\n"
+        "- salir: Cierra JARVIS.\n"
+        "- ver integraciones: Muestra las integraciones disponibles.\n"
+        "- ver planes: Muestra los planes guardados.\n"
+        "- editar_plan [nombre]: Edita un plan guardado.\n"
+        "- eliminar_plan [nombre]: Elimina un plan guardado.\n"
+        "- ejecutar_plan [nombre]: Ejecuta un plan guardado.\n"
+        "- ver grupos: Muestra los grupos de tareas.\n"
+        "- crear grupo <nombre>: Crea un grupo.\n"
+        "- crear grupo <nombre> con <n> trabajadores: "
+        "Crea un grupo con una cantidad de trabajadores.\n"
+        "- eliminar grupo <nombre o ID>: Elimina un grupo vacío.\n"
+        "- configurar grupo <nombre o ID> trabajadores <n>: "
+        "Modifica sus trabajadores.\n"
+        "- ver tareas <nombre o ID>: Muestra las tareas de un grupo.\n"
+        "- cancelar tarea <task_id>: Cancela una tarea pendiente.\n"
+        "- G o Guardar: Guarda el plan pendiente."
+        "- clear: limpia la pantalla de la terminal"
     )
 def _exit_jarvis(parameters: dict) -> str:
     """Responde a una solicitud de salida."""
@@ -65,6 +176,7 @@ def _see_copy(parameters: dict) -> str:
         "store_memory",
         "retrieve_memory",
         "see_integrations",
+        "clear"
     }
     handlers = _INTEGRATIONS.get_handlers()
     integrations = [
@@ -107,9 +219,12 @@ _INTEGRATIONS = IntegrationRegistry({
     "store_memory": _store_memory,
     "retrieve_memory": _retrieve_memory,
     "see_integrations": _see_copy,
+    "clear": _clear
 })
 _AI_CORE = AICore(handlers=_INTEGRATIONS.get_handlers(), integration_definitions=_INTEGRATIONS.get_definitions())
+_BACKGROUND_TASKS = BackgroundTaskManager()
 _PENDING_PLAN: ActionPlan | None = None
+_PENDING_GROUP_SELECTION: dict | None = None
 _PENDING_INTEGRATION: dict | None = None
 _PENDING_ACTION_INDEX = 0
 # Operaciones pendientes relacionadas con los planes guardados.
@@ -160,6 +275,7 @@ def _requires_confirmation(
         "exit",
         "recall",
         "see_integrations",
+        "clear"
     }
     return any(
         result.understood
@@ -550,7 +666,132 @@ def _handle_pending_integration(value: str) -> str:
     _PENDING_PLAN = plan
     _PENDING_ACTION_INDEX = 0
     return _format_action_plan(plan)
-def process_command(command: str) -> str:
+def _resolve_task_group(group: str) -> str:
+    """Resuelve un grupo mediante su identificador o nombre."""
+    groups = _BACKGROUND_TASKS.get_groups()
+    for item in groups:
+        if item.id == group or item.name.casefold() == group.casefold():
+            return item.id
+    raise KeyError(f"No existe el grupo '{group}'.")
+def create_task_group(name: str, max_workers: int = 1) -> str:
+    """Crea un grupo independiente de ejecución."""
+    return _BACKGROUND_TASKS.create_group(name, max_workers)
+def delete_task_group(group: str) -> bool:
+    """Elimina un grupo que no tenga tareas pendientes o activas."""
+    group_id = _resolve_task_group(group)
+    return _BACKGROUND_TASKS.delete_group(group_id)
+def configure_task_group(group: str, max_workers: int) -> bool:
+    """Modifica la cantidad de trabajadores de un grupo inactivo."""
+    group_id = _resolve_task_group(group)
+    return _BACKGROUND_TASKS.configure_group(group_id, max_workers)
+def list_task_groups() -> str:
+    """Muestra los grupos disponibles y su capacidad."""
+    groups = _BACKGROUND_TASKS.get_groups()
+    if not groups:
+        return "No hay grupos de ejecución."
+    lines = ["Grupos de ejecución:"]
+    for group in groups:
+        lines.append(
+            f"- {group.name} | ID: {group.id} | "
+            f"Trabajadores: {group.max_workers} | "
+            f"Pendientes: {group.pending_count} | "
+            f"Ejecutándose: {group.running_count}"
+        )
+    return "\n".join(lines)
+def list_group_tasks(group: str) -> str:
+    """Muestra las tareas registradas en un grupo."""
+    group_id = _resolve_task_group(group)
+    tasks = _BACKGROUND_TASKS.get_group_tasks(group_id)
+    if not tasks:
+        return "Este grupo no tiene tareas registradas."
+    lines = [f"Tareas del grupo '{group}':"]
+    for task in tasks:
+        lines.append(
+            f"- {task.name} | ID: {task.id} | "
+            f"Estado: {task.status.value}"
+        )
+    return "\n".join(lines)
+def submit_background_task(
+    function: Callable,
+    *args,
+    group: str = "default",
+    name: str | None = None,
+    **kwargs,
+) -> str:
+    """Asigna una función al grupo seleccionado."""
+    group_id = _resolve_task_group(group)
+    return _BACKGROUND_TASKS.submit_task(
+        function,
+        *args,
+        name=name,
+        group_id=group_id,
+        **kwargs,
+    )
+def get_background_notifications():
+    """Obtiene las notificaciones de tareas en segundo plano."""
+    return _BACKGROUND_TASKS.get_notifications()
+def shutdown_background_tasks() -> None:
+    """Cierra los ejecutores de tareas en segundo plano."""
+    _BACKGROUND_TASKS.shutdown()
+def cancel_background_task(task_id: str) -> bool:
+    """Cancela una tarea que todavía no ha comenzado."""
+    return _BACKGROUND_TASKS.cancel_task(task_id)
+def _handle_background_command(command: str) -> str | None:
+    """Procesa los comandos directos de administración de grupos."""
+    normalized = command.casefold()
+    if normalized == "ver grupos":
+        return list_task_groups()
+    if normalized.startswith("crear grupo "):
+        content = command[len("crear grupo "):].strip()
+        workers = 1
+        if " con " in content:
+            name, configuration = content.rsplit(" con ", 1)
+            parts = configuration.split()
+            if len(parts) == 2 and parts[1].casefold() == "trabajadores":
+                try:
+                    workers = int(parts[0])
+                except ValueError:
+                    return "La cantidad de trabajadores debe ser un entero."
+                content = name.strip()
+        try:
+            group_id = create_task_group(content, workers)
+            return f"Grupo '{content}' creado. ID: {group_id}"
+        except (TypeError, ValueError) as error:
+            return str(error)
+    if normalized.startswith("eliminar grupo "):
+        group = command[len("eliminar grupo "):].strip()
+        try:
+            if delete_task_group(group):
+                return f"Grupo '{group}' eliminado."
+            return "No se puede eliminar el grupo porque tiene tareas activas."
+        except (KeyError, ValueError) as error:
+            return str(error)
+    if normalized.startswith("configurar grupo "):
+        content = command[len("configurar grupo "):].strip()
+        parts = content.rsplit(" trabajadores ", 1)
+        if len(parts) != 2:
+            return "Usa: configurar grupo ID trabajadores CANTIDAD"
+        group, workers_text = parts
+        try:
+            workers = int(workers_text.strip())
+            if configure_task_group(group.strip(), workers):
+                return "Cantidad de trabajadores actualizada."
+            return "No se puede modificar un grupo con tareas pendientes o activas."
+        except (KeyError, TypeError, ValueError) as error:
+            return str(error)
+    if normalized.startswith("ver tareas "):
+        group = command[len("ver tareas "):].strip()
+        try:
+            return list_group_tasks(group)
+        except KeyError as error:
+            return str(error)
+    if normalized.startswith("cancelar tarea "):
+        task_id = command[len("cancelar tarea "):].strip()
+        if cancel_background_task(task_id):
+            return "Tarea cancelada."
+        return "No se pudo cancelar. Puede que ya haya comenzado o no exista."
+    return None
+def process_command(command: str) -> str:        
     """Analiza, razona y procesa una instrucción recibida por JARVIS."""
     global _PENDING_PLAN, _PENDING_ACTION_INDEX
     global _PENDING_OPERATION, _PENDING_INTEGRATION
@@ -561,6 +802,8 @@ def process_command(command: str) -> str:
     if _PENDING_INTEGRATION is not None:
         return _handle_pending_integration(command)
     # Resolver primero las operaciones pendientes.
+    if _PENDING_GROUP_SELECTION is not None:
+        return _handle_pending_group_selection(command)
     if _PENDING_OPERATION is not None:
         return _handle_plan_operation(command)
     # Resolver la autorización de un plan pendiente.
@@ -572,6 +815,10 @@ def process_command(command: str) -> str:
     if not command:
         return "No he recibido ninguna instrucción."
     normalized = command.casefold()
+    # Comandos de administración de tareas en segundo plano.
+    background_response = _handle_background_command(command)
+    if background_response is not None:
+        return background_response
     # Comandos de gestión de planes guardados.
     if normalized == "ver planes":
         return _list_saved_plans()
@@ -679,44 +926,12 @@ def _execute_pending_actions(
     start: int,
     all_remaining: bool,
 ) -> str:
-    """Ejecuta únicamente las acciones autorizadas."""
-    global _PENDING_PLAN, _PENDING_ACTION_INDEX
+    """Solicita el grupo para ejecutar las acciones autorizadas."""
     plan = _PENDING_PLAN
     if plan is None:
         return "No hay acciones pendientes de autorización."
     stop = len(plan.actions) if all_remaining else start + 1
-    authorized_plan = ActionPlan(
-        actions=plan.actions[start:stop],
-        requires_confirmation=True,
-        reason=plan.reason,
-    )
-    try:
-        result = _AI_CORE.execute_plan(
-            authorized_plan,
-            confirmed=True,
-        )
-    except Exception as error:
-        _PENDING_PLAN = None
-        _PENDING_ACTION_INDEX = 0
-        return f"Error al ejecutar el plan: {error}"
-    if not result.success:
-        _PENDING_PLAN = None
-        _PENDING_ACTION_INDEX = 0
-        return result.error or "No se pudo ejecutar el plan."
-    _PENDING_ACTION_INDEX = stop
-    if stop >= len(plan.actions):
-        _PENDING_PLAN = None
-        _PENDING_ACTION_INDEX = 0
-        return (
-            "Plan autorizado. Todas las acciones se ejecutaron correctamente.\n"
-            + result.output
-        )
-    return (
-        "Acción ejecutada correctamente.\n"
-        + result.output
-        + "\n\n"
-        + _format_next_action(plan, stop)
-    )
+    return _begin_group_selection(start, stop)
 def _handle_pending_confirmation(command: str) -> str:
     """Procesa las respuestas de autorización del usuario."""
     global _PENDING_PLAN, _PENDING_ACTION_INDEX

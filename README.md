@@ -14,7 +14,7 @@ python -m pip install -e .
 
 ## Versión
 
-`v0.3.3`
+`v0.3.4`
 
 ## Estado del proyecto
 
@@ -46,6 +46,13 @@ Son las que se implementan dentro del codigo fuente de Jarvis, están planeadas 
 - delete_plan: Toma el nombre del plan y lo borra de la memoria
 - execute_plan: executa un plan que está guardado.
 - ver planes: Muestra los planes guardados
+- ver grupos: Muestra los grupos disponibles.
+- crear grupo `nombre`: Crea un grupo nuevo.
+- eliminar grupo `nombre o ID`: Elimina un grupo vacío.
+- configurar grupo `nombre o ID` trabajadores `n`: Cambia la cantidad de trabajadores.
+- ver tareas `nombre o ID`: Muestra las tareas de un grupo.
+- cancelar tarea `task_id`: Cancela una tarea que todavía no comenzó.
+- clear: Limpia la pantalla de la terminal.
 - see_integrations: Muestra las integraciones secundarias y sus datos
 - salir: Cierra a Jarvis.
 
@@ -704,7 +711,57 @@ test_jarvis
 | `test_brain_accepts_flags_without_prompting` | Comprobar que JARVIS acepta parámetros proporcionados mediante banderas sin solicitarlos nuevamente. |
 | `test_brain_can_cancel_parameter_collection` | Verificar que el usuario puede cancelar la recopilación de parámetros pendientes. |
 
-**Total: 216 (+ Las pruebas de integraciones (4 para un total de 211)) pruebas automatizadas documentadas.**
+#### `test_background_tasks.py` — 17 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_executes_task_and_stores_result` | Comprobar que una tarea se ejecuta y almacena su resultado y nombre. |
+| `test_captures_task_errors` | Verificar que los errores de las tareas se capturan correctamente. |
+| `test_executes_tasks_concurrently` | Comprobar que varias tareas pueden ejecutarse simultáneamente dentro de un grupo. |
+| `test_cancels_task_that_has_not_started` | Verificar que una tarea pendiente puede cancelarse antes de comenzar. |
+| `test_collects_completion_notifications` | Comprobar que se generan notificaciones al finalizar las tareas. |
+| `test_rejects_invalid_worker_count` | Evitar cantidades inválidas de trabajadores. |
+| `test_rejects_non_callable_task` | Impedir el registro de tareas que no sean ejecutables. |
+| `test_rejects_tasks_after_shutdown` | Evitar registrar tareas después de cerrar el administrador. |
+| `test_creates_independent_groups` | Comprobar que se pueden crear grupos independientes con diferentes cantidades de trabajadores. |
+| `test_assigns_task_to_selected_group` | Verificar que una tarea se asigna al grupo seleccionado. |
+| `test_groups_execute_independently` | Comprobar que un grupo puede ejecutar tareas mientras otro tiene una tarea bloqueada. |
+| `test_configures_idle_group_worker_count` | Verificar que se puede modificar la cantidad de trabajadores de un grupo inactivo. |
+| `test_does_not_configure_group_with_active_tasks` | Impedir cambios de trabajadores mientras el grupo tiene tareas activas. |
+| `test_deletes_empty_group` | Comprobar que se pueden eliminar grupos sin tareas activas. |
+| `test_does_not_delete_group_with_active_tasks` | Impedir eliminar grupos que todavía tienen tareas activas. |
+| `test_rejects_deleting_default_group` | Evitar eliminar el grupo predeterminado. |
+| `test_rejects_unknown_group_when_submitting` | Impedir asignar tareas a grupos inexistentes. |
+
+#### `test_brain_background.py` — 10 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_create_group` | Comprobar que Brain puede crear grupos con una cantidad determinada de trabajadores. |
+| `test_list_groups` | Verificar que Brain puede consultar los grupos disponibles. |
+| `test_configure_group` | Comprobar que Brain puede modificar la cantidad de trabajadores de un grupo. |
+| `test_delete_group` | Verificar que Brain puede eliminar grupos disponibles. |
+| `test_submit_task_to_selected_group` | Comprobar que Brain asigna una tarea al grupo seleccionado. |
+| `test_list_group_tasks` | Verificar que Brain puede consultar las tareas de un grupo. |
+| `test_cannot_delete_group_with_active_task` | Impedir eliminar grupos que tienen tareas ejecutándose. |
+| `test_create_group_command` | Comprobar que JARVIS reconoce el comando para crear grupos. |
+| `test_list_groups_command` | Comprobar que JARVIS reconoce el comando para consultar grupos. |
+| `test_rejects_unknown_group` | Impedir asignar tareas a grupos inexistentes. |
+
+#### `test_brain_group_selection.py` — 8 pruebas
+
+| Nombre de la prueba | Qué verifica |
+|---|---|
+| `test_s_requests_group_selection` | Comprueba que S solicita seleccionar un grupo antes de ejecutar la acción. |
+| `test_o_requests_group_selection_for_remaining_actions` | Comprueba que O solicita seleccionar un grupo para las acciones restantes. |
+| `test_select_group_by_number` | Comprueba que se puede seleccionar un grupo mediante su número. |
+| `test_select_group_by_name` | Comprueba que se puede seleccionar un grupo mediante su nombre. |
+| `test_invalid_group_keeps_selection_pending` | Comprueba que una selección inválida mantiene pendiente la elección del grupo. |
+| `test_cancel_group_selection` | Comprueba que se puede cancelar la selección del grupo. |
+| `test_actions_are_submitted_to_selected_group` | Comprueba que la acción se envía al grupo seleccionado. |
+| `test_o_submits_all_remaining_actions` | Comprueba que todas las acciones restantes se envían al grupo seleccionado. |
+
+**Total: 251 (+ Las pruebas de integraciones) pruebas automatizadas documentadas.**
 
 Las pruebas permiten verificar el funcionamiento de los componentes, detectar errores y comprobar que las modificaciones no afecten funcionalidades existentes. Se incorporarán nuevas pruebas conforme avance el desarrollo.
 

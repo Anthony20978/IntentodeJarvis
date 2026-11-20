@@ -28,6 +28,7 @@ class TestBrainPlans(unittest.TestCase):
         brain._PENDING_PLAN = None
         brain._PENDING_ACTION_INDEX = 0
         brain._PENDING_OPERATION = None
+        brain._PENDING_GROUP_SELECTION = None
         self.plan = ActionPlan(
             actions=[
                 Action(
@@ -47,6 +48,7 @@ class TestBrainPlans(unittest.TestCase):
         brain._PENDING_PLAN = None
         brain._PENDING_ACTION_INDEX = 0
         brain._PENDING_OPERATION = None
+        brain._PENDING_GROUP_SELECTION = None
         brain._AI_CORE = self.original_ai_core
         self.plan_store_patch.stop()
         self.temp_dir.cleanup()
@@ -107,23 +109,29 @@ class TestBrainPlans(unittest.TestCase):
         self.assertIn("PLAN DE EJECUCIÓN", result)
         self.assertIsNotNone(brain._PENDING_PLAN)
         self.mock_ai_core.execute_plan.assert_not_called()
-    def test_execute_plan_one_action_at_a_time(self):
+    def test_execute_plan_sends_one_action_to_group(self):
         self._save_plan()
         brain.process_command("ejecutar_plan Mi plan")
         result = brain.process_command("S")
-        self.assertIn("Acción ejecutada", result)
-        self.assertIsNotNone(brain._PENDING_PLAN)
+        self.assertIn("¿A qué grupo", result)
+        with patch.object(
+            brain._BACKGROUND_TASKS,
+            "submit_task",
+            side_effect=lambda task, *args, **kwargs: (
+                task(),
+                "task-1",
+            )[1],
+        ) as submit:
+            result = brain.process_command("1")
+        self.assertIn("1 acción(es) enviada(s)", result)
+        self.assertEqual(submit.call_count, 1)
+        self.mock_ai_core.execute_plan.assert_called_once()
+        executed_plan = self.mock_ai_core.execute_plan.call_args.args[0]
         self.assertEqual(
-            self.mock_ai_core.execute_plan.call_count,
-            1,
+            executed_plan.actions[0].name,
+            "weather",
         )
-        result = brain.process_command("S")
-        self.assertIn("Todas las acciones", result)
         self.assertIsNone(brain._PENDING_PLAN)
-        self.assertEqual(
-            self.mock_ai_core.execute_plan.call_count,
-            2,
-        )
     def test_cancel_pending_plan_execution(self):
         self._save_plan()
         brain.process_command("ejecutar_plan Mi plan")

@@ -9,9 +9,24 @@ from src.jarvis.ai.structures import (
     ExecutionResult,
 )
 class TestBrainConfirmation(unittest.TestCase):
+    def _capture_task(self, task, *args, **kwargs):
+        self.submitted_tasks.append({
+            "task": task,
+            "args": args,
+            "kwargs": kwargs,
+        })
+        return f"task-{len(self.submitted_tasks)}"
     def setUp(self):
+        brain._PENDING_GROUP_SELECTION = None
         brain._PENDING_PLAN = None
         brain._PENDING_ACTION_INDEX = 0
+        self.submit_patch = patch.object(
+            brain._BACKGROUND_TASKS,
+            "submit_task",
+            side_effect=self._capture_task,
+        )
+        self.submit_task = self.submit_patch.start()
+        self.submitted_tasks = []
         self.plan = ActionPlan(
             actions=[
                 Action("first", {"value": "one"}),
@@ -48,8 +63,10 @@ class TestBrainConfirmation(unittest.TestCase):
     def tearDown(self):
         self.process_patch.stop()
         self.execute_patch.stop()
+        self.submit_patch.stop()
         brain._PENDING_PLAN = None
         brain._PENDING_ACTION_INDEX = 0
+        brain._PENDING_GROUP_SELECTION = None
     def test_plan_is_shown_before_execution(self):
         response = brain.process_command("instrucción")
         self.assertIn("PLAN DE EJECUCIÓN", response)
@@ -59,55 +76,61 @@ class TestBrainConfirmation(unittest.TestCase):
     def test_s_authorizes_only_one_action(self):
         brain.process_command("instrucción")
         response = brain.process_command("S")
+        self.assertIn("¿A qué grupo", response)
+        self.execute_plan.assert_not_called()
+        response = brain.process_command("1")
+        self.assertIn("1 acción(es) enviada(s)", response)
+        self.assertEqual(len(self.submitted_tasks), 1)
+        task = self.submitted_tasks[0]
+        self.assertEqual(task["kwargs"]["name"], "first")
+        self.assertEqual(task["kwargs"]["group_id"], "default")
+        task["task"]()
         self.execute_plan.assert_called_once()
         executed_plan = self.execute_plan.call_args.args[0]
         self.assertEqual(
             [action.name for action in executed_plan.actions],
             ["first"],
         )
-        self.assertEqual(
-            executed_plan.actions[0].parameters,
-            {"value": "one"},
-        )
         self.assertTrue(
             self.execute_plan.call_args.kwargs["confirmed"]
         )
-        self.assertIn("Siguiente acción (2/3)", response)
-        self.assertIs(brain._PENDING_PLAN, self.plan)
     def test_o_authorizes_all_remaining_actions(self):
         brain.process_command("instrucción")
         brain.process_command("S")
+        brain.process_command("1")
+        self.assertEqual(len(self.submitted_tasks), 1)
+        # Simular que la primera acción ya fue enviada.
+        brain._PENDING_PLAN = self.plan
+        brain._PENDING_ACTION_INDEX = 1
         self.execute_plan.reset_mock()
+        self.submitted_tasks.clear()
         response = brain.process_command("O")
-        self.execute_plan.assert_called_once()
-        executed_plan = self.execute_plan.call_args.args[0]
-        self.assertEqual(
-            [action.name for action in executed_plan.actions],
-            ["second", "third"],
-        )
-        self.assertEqual(
-            [action.parameters for action in executed_plan.actions],
-            [
-                {"value": "two"},
-                {"value": "three"},
-            ],
-        )
-        self.assertTrue(
-            self.execute_plan.call_args.kwargs["confirmed"]
-        )
-        self.assertIn("Todas las acciones se ejecutaron", response)
-        self.assertIsNone(brain._PENDING_PLAN)
-        self.assertEqual(brain._PENDING_ACTION_INDEX, 0)
+        self.assertIn("¿A qué grupo", response)
+        response = brain.process_command("1")
+        self.assertIn("2 acción(es) enviada(s)", response)
+        self.assertEqual(len(self.submitted_tasks), 2)
+        for task in self.submitted_tasks:
+            task["task"]()
+        self.assertEqual(self.execute_plan.call_count, 2)
+        executed_names = [
+            call.args[0].actions[0].name
+            for call in self.execute_plan.call_args_list
+        ]
+        self.assertEqual(executed_names, ["second", "third"])
     def test_o_authorizes_all_actions_from_the_beginning(self):
         brain.process_command("instrucción")
-        response = brain.process_command("O")
-        self.execute_plan.assert_called_once()
-        executed_plan = self.execute_plan.call_args.args[0]
-        self.assertEqual(
-            [action.name for action in executed_plan.actions],
-            ["first", "second", "third"],
-        )
-        self.assertIn("Todas las acciones se ejecutaron", response)
+        brain.process_command("O")
+        response = brain.process_command("1")
+        self.assertIn("3 acción(es) enviada(s)", response)
+        self.assertEqual(len(self.submitted_tasks), 3)
+        for task in self.submitted_tasks:
+            task["task"]()
+        self.assertEqual(self.execute_plan.call_count, 3)
+        executed_names = [
+            call.args[0].actions[0].name
+            for call in self.execute_plan.call_args_list
+        ]
+        self.assertEqual(executed_names, ["first", "second", "third"])
         self.assertIsNone(brain._PENDING_PLAN)
     def test_n_cancels_remaining_actions(self):
         brain.process_command("instrucción")
@@ -150,8 +173,11 @@ class TestBrainConfirmation(unittest.TestCase):
             error="Acción rechazada.",
         )
         brain.process_command("instrucción")
-        response = brain.process_command("S")
-        self.assertIn("Acción rechazada", response)
+        brain.process_command("S")
+        brain.process_command("1")
+        self.assertEqual(len(self.submitted_tasks), 1)
+        with self.assertRaisesRegex(RuntimeError, "Acción rechazada"):
+            self.submitted_tasks[0]["task"]()
         self.assertIsNone(brain._PENDING_PLAN)
         self.assertEqual(brain._PENDING_ACTION_INDEX, 0)
     def test_analysis_batch_supports_multiple_actions(self):

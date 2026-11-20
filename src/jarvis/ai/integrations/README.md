@@ -4,6 +4,9 @@
 
 Fué una integracion con el proposito de probar el funcionamiento de las integraciones. Ya está integrada en Jarvis y utiliza las banderas -x, que toma la expresión a calcular -u que toma la unidad angular que usara la expresión.
 
+## Clima y Temporizador
+despues de hacer manuelmente calculadora, probamos hacer estas dos integraciones con chat GPT con el proposito de verificar que tan intituivo es el sistema
+
 ## Montaje de una integracion
 Se necesitan 4 archivos para hacer una integración:
 ### __init__.py

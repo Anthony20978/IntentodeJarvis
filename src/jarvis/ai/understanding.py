@@ -68,6 +68,18 @@ def _analyze_single(data: InputData, context=None, available_integrations: Mappi
         return AnalysisResult(intent="help", confidence=1.0, understood=True)
     if normalized_text in EXIT_PHRASES:
         return AnalysisResult(intent="exit", confidence=1.0, understood=True)
+    if normalized_text in {
+        "clear",
+        "limpia la terminal",
+        "limpiar la terminal",
+        "limpia la pantalla",
+        "limpiar pantalla",
+    }:
+        return AnalysisResult(
+            intent="clear",
+            confidence=1.0,
+            understood=True,
+        )
     if normalized_text == "see_integrations" or normalized_text == "ver_integraciones":
         return AnalysisResult(intent="integration", entities={"integration": "see_integrations"}, confidence=1.0, understood=True)
     remember = re.fullmatch(r"recuerda\s+(.+?)\s*:\s*(.+)", original_text, re.IGNORECASE | re.DOTALL)

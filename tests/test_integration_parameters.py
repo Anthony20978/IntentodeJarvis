@@ -71,14 +71,26 @@ class TestBrainMissingIntegrationParameters(unittest.TestCase):
         brain._PENDING_PLAN = None
         brain._PENDING_INTEGRATION = None
         brain._PENDING_OPERATION = None
+        brain._PENDING_GROUP_SELECTION = None
         brain._PENDING_ACTION_INDEX = 0
     def tearDown(self):
         brain._PENDING_PLAN = None
         brain._PENDING_INTEGRATION = None
         brain._PENDING_OPERATION = None
+        brain._PENDING_GROUP_SELECTION = None
         brain._PENDING_ACTION_INDEX = 0
     def test_brain_prompts_for_missing_parameter_then_confirmation(self):
-        with patch.object(brain._AI_CORE, "execute_plan") as execute:
+        with (
+            patch.object(brain._AI_CORE, "execute_plan") as execute,
+            patch.object(
+                brain._BACKGROUND_TASKS,
+                "submit_task",
+                side_effect=lambda task, *args, **kwargs: (
+                    task(),
+                    "task-1",
+                )[1],
+            ) as submit,
+        ):
             response = brain.process_command("ejecuta calculadora")
             self.assertIn("expresion", response)
             self.assertIsNotNone(brain._PENDING_INTEGRATION)
@@ -86,8 +98,16 @@ class TestBrainMissingIntegrationParameters(unittest.TestCase):
             self.assertIn("PLAN DE EJECUCIÓN", response)
             self.assertIsNone(brain._PENDING_INTEGRATION)
             execute.assert_not_called()
-            brain.process_command("S")
+            response = brain.process_command("S")
+            self.assertIn("¿A qué grupo", response)
+            execute.assert_not_called()
+            response = brain.process_command("1")
+            self.assertIn("1 acción(es) enviada(s)", response)
+            submit.assert_called_once()
             execute.assert_called_once()
+            executed_plan = execute.call_args.args[0]
+            self.assertEqual(len(executed_plan.actions), 1)
+            self.assertTrue(execute.call_args.kwargs["confirmed"])
     def test_brain_accepts_flags_without_prompting(self):
         with patch.object(brain._AI_CORE, "execute_plan") as execute:
             response = brain.process_command('ejecuta calculadora -x "2+2"')

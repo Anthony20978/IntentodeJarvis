@@ -4,6 +4,7 @@ from pathlib import Path
 from unittest.mock import patch
 from src.jarvis import memory
 from src.jarvis.brain import process_command
+from src.jarvis import brain
 from src.jarvis.platform import get_system_info
 from src.jarvis.capabilities import get_capabilities
 class JarvisCoreTests(unittest.TestCase):
@@ -19,10 +20,18 @@ class JarvisCoreTests(unittest.TestCase):
         self.data_patch.start()
         self.database_patch.start()
         memory.initialize_memory()
+        brain._PENDING_GROUP_SELECTION = None
+        brain._PENDING_GROUP_SELECTION = None
+        brain._PENDING_PLAN = None
+        brain._PENDING_ACTION_INDEX = 0
     def tearDown(self):
         self.data_patch.stop()
         self.database_patch.stop()
         self.temp_dir.cleanup()
+        brain._PENDING_GROUP_SELECTION = None
+        brain._PENDING_GROUP_SELECTION = None
+        brain._PENDING_PLAN = None
+        brain._PENDING_ACTION_INDEX = 0
     def test_save_and_get_memory(self):
         memory.save_memory("nombre", "JARVIS")
         self.assertEqual(
@@ -50,14 +59,21 @@ class JarvisCoreTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             memory.save_memory("nombre", " ")
     def test_remember_command(self):
-        response = process_command(
-            "recuerda nombre: JARVIS"
-        )
-        self.assertEqual(response, "He guardado: nombre.")
-        self.assertEqual(
-            memory.get_memory("nombre"),
-            "JARVIS"
-        )
+        response = process_command("recuerda nombre: JARVIS")
+        self.assertIn("PLAN DE EJECUCIÓN", response)
+        response = process_command("S")
+        self.assertIn("¿A qué grupo", response)
+        with patch.object(
+            brain._BACKGROUND_TASKS,
+            "submit_task",
+            side_effect=lambda task, *args, **kwargs: (
+                task(),
+                "task-1",
+            )[1],
+        ):
+            response = process_command("1")
+        self.assertIn("1 acción(es) enviada(s)", response)
+        self.assertEqual(memory.get_memory("nombre"), "JARVIS")
     def test_retrieve_command(self):
         memory.save_memory("nombre", "JARVIS")
         self.assertEqual(
@@ -84,16 +100,5 @@ class JarvisCoreTests(unittest.TestCase):
         self.assertTrue(capabilities["system_detection"])
         self.assertTrue(capabilities["persistent_memory"])
         self.assertTrue(capabilities["command_processing"])
-    def test_remember_command(self):
-        response = process_command(
-            "recuerda nombre: JARVIS"
-        )
-        self.assertIn("PLAN DE EJECUCIÓN", response)
-        response = process_command("S")
-        self.assertIn("He guardado: nombre.", response)
-        self.assertEqual(
-            memory.get_memory("nombre"),
-            "JARVIS"
-        )
 if __name__ == "__main__":
     unittest.main()
